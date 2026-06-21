@@ -1,0 +1,14 @@
+# Secrets — never commit (see foundation/security-and-privacy.md)
+.env
+.env.*
+!.env.example
+
+# Node / Next.js (added now so secrets can't slip in before scaffolding)
+node_modules/
+.next/
+out/
+dist/
+build/
+*.log
+.DS_Store
+.vercel
