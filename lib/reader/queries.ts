@@ -10,34 +10,26 @@ export type ReaderComment = {
   author: { display_name: string | null; avatar_url: string | null } | null;
 };
 
-// Visible comments on an artifact, with author display fields. We join in two steps rather than
-// PostgREST-embedding, because the author display comes from the `public_profiles` VIEW (RLS on
-// `profiles` itself only exposes a user's own row). RLS already filters to status='visible' on
-// published artifacts for non-admins.
+// Visible comments on an artifact. The author's public display (name + avatar) is denormalized
+// onto the row at insert time (0006), so this is a single-table read — no profiles join, no
+// SECURITY DEFINER view. RLS already filters to status='visible' on published artifacts for
+// non-admins.
 export async function listComments(artifactId: string): Promise<ReaderComment[]> {
   const supabase = createClient();
   const { data: rows } = await supabase
     .from("reader_comments")
-    .select("id, body, created_at, edited, author_id")
+    .select("id, body, created_at, edited, author_id, author_name, author_avatar")
     .eq("artifact_id", artifactId)
     .order("created_at", { ascending: true });
-  const comments = rows ?? [];
-  if (comments.length === 0) return [];
 
-  const authorIds = [...new Set(comments.map((c) => c.author_id))];
-  const { data: profiles } = await supabase
-    .from("public_profiles")
-    .select("id, display_name, avatar_url")
-    .in("id", authorIds);
-  const byId = new Map((profiles ?? []).map((p) => [p.id, p]));
-
-  return comments.map((c) => {
-    const p = byId.get(c.author_id);
-    return {
-      ...c,
-      author: p ? { display_name: p.display_name, avatar_url: p.avatar_url } : null,
-    };
-  });
+  return (rows ?? []).map((c) => ({
+    id: c.id,
+    body: c.body,
+    created_at: c.created_at,
+    edited: c.edited,
+    author_id: c.author_id,
+    author: { display_name: c.author_name, avatar_url: c.author_avatar },
+  }));
 }
 
 export async function getBookmarked(artifactId: string): Promise<boolean> {

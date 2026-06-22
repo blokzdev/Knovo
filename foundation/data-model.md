@@ -6,9 +6,9 @@ The schema is designed now to accommodate later public accounts/bookmarks/commen
 *(Amended 2026-06-22 — `0004_editorial_workflow` added the governed editorial workflow: an
 expanded status lifecycle, admin `comments`/directives, `revisions` history, `series`, an
 `audit_log`, and soft-delete. `0005_reader_engagement` then added public reader accounts —
-`bookmarks`, public `reader_comments`, `subscriptions`, and the `public_profiles` view. Note the
-two comment tables are distinct: admin-only `comments` (control signals) vs. public
-`reader_comments` (social).)*
+`bookmarks`, public `reader_comments`, `subscriptions` (`0006` hardened these: author display
+denormalized onto the comment row, RLS perf, FK indexes). Note the two comment tables are
+distinct: admin-only `comments` (control signals) vs. public `reader_comments` (social).)*
 
 ## Tables
 
@@ -111,12 +111,13 @@ the API on every mutation (`actor` = `worker:scout|editor` or `admin:<uid>`).
 Reader-owned tables, **outside** the worker API + slot schema (the worker surface is unchanged).
 - **profiles** gain `avatar_url`; `handle_new_user` now captures `display_name`/`avatar_url` from
   the Google identity. Profile is read-only from Google in v1 (no self-update → no role escalation).
-- **public_profiles** — a `SECURITY DEFINER` view exposing only `(id, display_name, avatar_url)`,
-  granted to anon/authenticated, so comment authors render without leaking email/role.
 - **bookmarks** `(user_id FK→profiles, artifact_id FK→artifacts, created_at, PK(user_id,artifact_id))` — private.
 - **reader_comments** `(id, artifact_id FK, author_id FK→profiles, body, status enum
-  reader_comment_status{visible|hidden|removed}, edited, created_at, updated_at)` — public social
-  comments, **distinct** from the editorial `comments` table. Admin moderates via status.
+  reader_comment_status{visible|hidden|removed}, edited, author_name, author_avatar, created_at,
+  updated_at)` — public social comments, **distinct** from the editorial `comments` table. Admin
+  moderates via status. The author's public display (`author_name`/`author_avatar`) is **stamped
+  at insert by a `SECURITY DEFINER` trigger** from the author's profile (immutable, spoof-proof),
+  so the public read is a single table with no `profiles` join and no exposed view (`0006`).
 - **subscriptions** `(id, user_id FK→profiles, scope='all', created_at, UNIQUE(user_id,scope))` —
   records intent; RSS now, email later.
 
@@ -154,7 +155,8 @@ governance is enforced in the API, not RLS.**
 - `comments` / `revisions` / `audit_log`: admin-only (no anon); written by the API.
 - `bookmarks` / `subscriptions`: private to the owner (`user_id = auth.uid()`).
 - `reader_comments`: anon SELECT of `status='visible'` on a live published artifact; author
-  inserts/edits/deletes own; admin moderates any. `public_profiles` view: public SELECT.
+  inserts/edits/deletes own; admin moderates any. Author display is denormalized on the row, so
+  no separate profile read is needed for public rendering.
 
 ## Open questions
 - **Resolved (2026-06-22):** `published` edits mutate in place **and** snapshot the prior

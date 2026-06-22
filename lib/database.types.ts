@@ -378,7 +378,9 @@ export type Database = {
       reader_comments: {
         Row: {
           artifact_id: string
+          author_avatar: string | null
           author_id: string
+          author_name: string | null
           body: string
           created_at: string
           edited: boolean
@@ -388,7 +390,9 @@ export type Database = {
         }
         Insert: {
           artifact_id: string
+          author_avatar?: string | null
           author_id: string
+          author_name?: string | null
           body: string
           created_at?: string
           edited?: boolean
@@ -398,7 +402,9 @@ export type Database = {
         }
         Update: {
           artifact_id?: string
+          author_avatar?: string | null
           author_id?: string
+          author_name?: string | null
           body?: string
           created_at?: string
           edited?: boolean
@@ -454,14 +460,6 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          avatar_url: string | null
-          display_name: string | null
-          id: string | null
-        }
-        Relationships: []
-      }
       rejected_source_keys: {
         Row: {
           source_db: Database["public"]["Enums"]["source_db"] | null
