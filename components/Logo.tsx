@@ -7,8 +7,8 @@ import Link from "next/link";
 // The five atoms of the "K", each a distinct, evenly-spaced hue. One source of
 // truth for the palette — shared by the favicon and apple-icon (keep in sync).
 const KNOVO_NODES = [
-  { cx: 11, cy: 8, color: "#A855F7" }, // violet — top of the spine
-  { cx: 11, cy: 16, color: "#FBBF24" }, // amber — junction
+  { cx: 11, cy: 8, color: "#FBBF24" }, // amber — top of the spine
+  { cx: 11, cy: 16, color: "#A855F7" }, // violet — junction (center)
   { cx: 11, cy: 24, color: "#34D399" }, // emerald — foot of the spine
   { cx: 22, cy: 8, color: "#38BDF8" }, // sky — upper arm
   { cx: 22, cy: 24, color: "#FB7185" }, // rose — lower arm
