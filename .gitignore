@@ -3,12 +3,14 @@
 .env.*
 !.env.example
 
-# Node / Next.js (added now so secrets can't slip in before scaffolding)
+# Node / Next.js
 node_modules/
 .next/
 out/
 dist/
 build/
+next-env.d.ts
+*.tsbuildinfo
 *.log
 .DS_Store
 .vercel
