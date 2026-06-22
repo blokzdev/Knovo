@@ -39,8 +39,15 @@ revisions, series, audit, soft-delete); the **Scout + Editor + Keeper** worker s
 param-grammar interactivity; immersive responsive mode; the molecular3d highlight **selection
 grammar** (now triggered).
 
-**1c — Public read site:** SSR live-published artifacts at clean URLs with JSON-LD; series pages
-(reuses `<ArtifactRenderer>`).
+**1c — Public read site (DONE 2026-06-22):** SSR live-published artifacts at clean URLs
+(`/a/<slug>`) via the shared `<ArtifactRenderer>`, with generateMetadata + JSON-LD
+(`ScholarlyArticle`); `/explore` browse, `/series/<slug>` pages, an RSS feed (`/feed.xml`),
+sitemap + robots, and a shared public shell (`app/(site)/` header/footer). Public reads exclude
+non-published/soft-deleted.
+
+**1d — Reader accounts & engagement (next):** Google sign-in for readers; bookmarks; reader
+comments (distinct from editorial directives) with admin moderation; subscribe (record + RSS now,
+email later). Amends Decision #5.
 
 **Phase 1 gate (sketch):** a worker drafts a real finding via the API; the admin reviews,
 comments/directs in the HUD, and the Editor iterates and publishes on direction; the published
