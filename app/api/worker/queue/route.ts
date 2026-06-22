@@ -14,24 +14,30 @@ export async function GET(req: Request) {
   const db = createAdminClient();
   const { data, error } = await db
     .from("comments")
-    .select("id, body, directive, created_at, artifact:artifacts(id, slug, title, status, deleted_at)")
+    .select("id, note, action, publish_after, options, created_at, artifact:artifacts(id, slug, title, status, deleted_at)")
     .eq("status", "open")
     .order("created_at", { ascending: true });
   if (error) return err(500, "queue_read_failed", error.message);
 
   type Row = {
     id: string;
-    body: string | null;
-    directive: string | null;
+    note: string | null;
+    action: string | null;
+    publish_after: boolean;
+    options: unknown;
     created_at: string;
     artifact: { id: string; slug: string; title: string; status: string; deleted_at: string | null } | null;
   };
+  // Only actionable directives (an action OR publish-after) enter the worker queue; plain notes
+  // are a human record and are skipped, as are comments on soft-deleted artifacts.
   const items = ((data ?? []) as unknown as Row[])
-    .filter((r) => r.artifact && r.artifact.deleted_at === null)
+    .filter((r) => r.artifact && r.artifact.deleted_at === null && (r.action !== null || r.publish_after))
     .map((r) => ({
       comment_id: r.id,
-      directive: r.directive,
-      note: r.body,
+      action: r.action,
+      publish_after: r.publish_after,
+      note: r.note,
+      options: r.options ?? null,
       created_at: r.created_at,
       artifact: r.artifact && {
         id: r.artifact.id,

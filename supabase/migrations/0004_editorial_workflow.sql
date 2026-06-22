@@ -16,14 +16,10 @@ alter type public.artifact_status add value if not exists 'approved';
 alter type public.artifact_status add value if not exists 'archived';
 
 -- ── New enums ────────────────────────────────────────────────────────────────
-create type public.comment_directive as enum (
-  'iterate_and_resubmit', -- revise the draft, return it to review
-  'iterate_and_publish',  -- revise then publish (admin authorizes publish)
-  'enhance',              -- improve/extend a (possibly live) article
-  'make_series',          -- split/expand into a series
-  'revise',               -- general changes requested
-  'archive'               -- remove from public, keep in workflow
-);
+-- A directive is two axes: WHAT to do (action) × whether to PUBLISH after (publish_after),
+-- plus a free-text note and optional advanced params. `revise` covers update/enhance on a
+-- draft or a live article; null action = a plain note (or, with publish_after, "publish as-is").
+create type public.directive_action as enum ('revise', 'make_series', 'archive');
 create type public.comment_status as enum ('open', 'addressed', 'dismissed');
 
 -- ── series (collections) ─────────────────────────────────────────────────────
@@ -46,18 +42,23 @@ create index artifacts_deleted_idx on public.artifacts(deleted_at);
 
 -- ── comments (admin editorial signals — NOT public social comments) ──────────
 create table public.comments (
-  id           uuid primary key default gen_random_uuid(),
-  artifact_id  uuid not null references public.artifacts(id) on delete cascade,
-  author       uuid references auth.users(id),          -- admin author; null for system
-  body         text,                                    -- natural-language note
-  directive    public.comment_directive,                -- optional structured action cue
-  status       public.comment_status not null default 'open',
-  created_at   timestamptz not null default now(),
-  addressed_at timestamptz,
-  addressed_by text                                     -- worker id that handled it
+  id            uuid primary key default gen_random_uuid(),
+  artifact_id   uuid not null references public.artifacts(id) on delete cascade,
+  author        uuid references auth.users(id),         -- admin author; null for system
+  note          text,                                   -- natural-language instruction
+  action        public.directive_action,                -- optional structured cue (null = note)
+  publish_after boolean not null default false,          -- "...and publish when done"
+  options       jsonb,                                   -- optional advanced params (future)
+  status        public.comment_status not null default 'open',
+  created_at    timestamptz not null default now(),
+  addressed_at  timestamptz,
+  addressed_by  text                                    -- worker that handled it
 );
 create index comments_artifact_idx on public.comments(artifact_id);
-create index comments_open_idx on public.comments(artifact_id) where status = 'open';
+-- "Actionable" = open AND (has an action OR is flagged publish-after). Plain notes are excluded
+-- from the worker queue but kept as a human record.
+create index comments_actionable_idx on public.comments(artifact_id)
+  where status = 'open' and (action is not null or publish_after);
 
 -- ── revisions (version history → recoverability) ─────────────────────────────
 create table public.revisions (

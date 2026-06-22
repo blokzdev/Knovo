@@ -93,28 +93,33 @@ Call the API with curl using KNOVO_API_BASE and KNOVO_WORKER_TOKEN_EDITOR
 (Authorization: Bearer $KNOVO_WORKER_TOKEN_EDITOR). If the trigger included a "text" payload,
 treat it as the admin's immediate instruction in addition to the queue.
 
-1. PULL the queue: GET {KNOVO_API_BASE}/worker/queue. You get open comments paired with their
-   artifact { comment_id, directive, note, artifact:{id,slug,title,status} }.
+1. PULL the queue: GET {KNOVO_API_BASE}/worker/queue. Each item is an actionable directive:
+   { comment_id, action, publish_after, note, options, artifact:{id,slug,title,status} }.
+   A directive has two axes: `action` (what to do; may be null) and `publish_after` (whether to
+   publish when done). `note` is the admin's natural-language instruction; obey it.
 
-2. For each item, ACT per its directive (and the natural-language note):
-   - "iterate_and_resubmit" or "revise": improve the doc per the note, then
-     PATCH {KNOVO_API_BASE}/worker/artifacts/{id} {"doc":<updated>, "note":"..."}, then
-     POST {KNOVO_API_BASE}/worker/artifacts/{id}/status {"to":"needs_review"}.
-   - "iterate_and_publish": improve the doc, PATCH it, then
-     POST .../status {"to":"published"}  (the API allows this because the directive authorizes it).
-   - "enhance": improve a (possibly published) article in place — PATCH the doc. Editing a
-     published artifact is allowed only because an enhance/revise directive is open.
-   - "make_series": POST {KNOVO_API_BASE}/worker/series {"title","summary","artifactIds":[...]}.
-   - "archive": POST .../status {"to":"archived"}.
-   Re-ground from primary sources (bioRxiv/PubMed/ChEMBL/PDB) whenever you change scientific
-   content. Keep filling slots ONLY — never emit layout or new slot kinds. The API zod-validates
-   every write (422 on failure) and snapshots a revision automatically.
+2. For each item, ACT:
+   a) DO THE ACTION:
+      - action "revise" (or null action but a note asking for a change): improve the doc per the
+        note (re-ground from primary sources for any scientific change), then
+        PATCH {KNOVO_API_BASE}/worker/artifacts/{id} {"doc":<updated>, "note":"<what you changed>"}.
+        This works for drafts AND live articles (editing a published artifact is allowed because
+        a revise directive is open).
+      - action "make_series": POST {KNOVO_API_BASE}/worker/series {"title","summary","artifactIds":[...]}.
+      - action "archive": POST {KNOVO_API_BASE}/worker/artifacts/{id}/status {"to":"archived"}.
+      - action null (a "publish as-is" with no change): do nothing in this step.
+   b) THEN SET STATUS:
+      - if publish_after is true: POST .../status {"to":"published"} (the API allows it because the
+        directive is flagged publish_after).
+      - else, if you revised a draft: POST .../status {"to":"needs_review"} so the admin re-reviews.
+   Keep filling slots ONLY — never emit layout or new slot kinds. The API zod-validates every
+   write (422 on failure) and snapshots a revision automatically.
 
 3. RESOLVE each handled item: POST {KNOVO_API_BASE}/worker/comments/{comment_id}/resolve
-   {"disposition":"addressed"} (or "dismissed" if no action was appropriate, with a note).
+   {"disposition":"addressed"} (or "dismissed", with a note, if no action was appropriate).
 
-Only publish when a directive/approval authorizes it — the API enforces this; do not attempt to
-work around a 403. Stop cleanly when the queue is empty.
+Only publish when publish_after is set (or the admin already marked the artifact approved) — the
+API enforces this; do not try to work around a 403. Stop cleanly when the queue is empty.
 ```
 
 ---

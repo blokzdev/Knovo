@@ -169,36 +169,42 @@ export type Database = {
       }
       comments: {
         Row: {
+          action: Database["public"]["Enums"]["directive_action"] | null
           addressed_at: string | null
           addressed_by: string | null
           artifact_id: string
           author: string | null
-          body: string | null
           created_at: string
-          directive: Database["public"]["Enums"]["comment_directive"] | null
           id: string
+          note: string | null
+          options: Json | null
+          publish_after: boolean
           status: Database["public"]["Enums"]["comment_status"]
         }
         Insert: {
+          action?: Database["public"]["Enums"]["directive_action"] | null
           addressed_at?: string | null
           addressed_by?: string | null
           artifact_id: string
           author?: string | null
-          body?: string | null
           created_at?: string
-          directive?: Database["public"]["Enums"]["comment_directive"] | null
           id?: string
+          note?: string | null
+          options?: Json | null
+          publish_after?: boolean
           status?: Database["public"]["Enums"]["comment_status"]
         }
         Update: {
+          action?: Database["public"]["Enums"]["directive_action"] | null
           addressed_at?: string | null
           addressed_by?: string | null
           artifact_id?: string
           author?: string | null
-          body?: string | null
           created_at?: string
-          directive?: Database["public"]["Enums"]["comment_directive"] | null
           id?: string
+          note?: string | null
+          options?: Json | null
+          publish_after?: boolean
           status?: Database["public"]["Enums"]["comment_status"]
         }
         Relationships: [
@@ -362,14 +368,8 @@ export type Database = {
         | "changes_requested"
         | "approved"
         | "archived"
-      comment_directive:
-        | "iterate_and_resubmit"
-        | "iterate_and_publish"
-        | "enhance"
-        | "make_series"
-        | "revise"
-        | "archive"
       comment_status: "open" | "addressed" | "dismissed"
+      directive_action: "revise" | "make_series" | "archive"
       source_db: "pdb" | "chembl" | "pubmed" | "biorxiv"
       source_role: "primary" | "supporting"
       user_role: "admin" | "viewer"

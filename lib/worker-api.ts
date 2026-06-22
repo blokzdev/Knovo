@@ -9,7 +9,11 @@ import type { Database } from "@/lib/database.types";
 
 export type Db = SupabaseClient<Database>;
 export type Status = Database["public"]["Enums"]["artifact_status"];
-export type Directive = Database["public"]["Enums"]["comment_directive"];
+export type DirectiveAction = Database["public"]["Enums"]["directive_action"];
+
+// A directive is two axes: an optional action (what to do) and a publish_after flag (whether to
+// publish when done). An "actionable" directive has an action OR is flagged publish_after.
+export type OpenDirective = { action: DirectiveAction | null; publish_after: boolean };
 
 export function json(body: unknown, status = 200) {
   return NextResponse.json(body, { status });
@@ -43,17 +47,16 @@ export async function uniqueSlug(db: Db, base: string): Promise<string> {
   return `${root}-${Date.now().toString(36)}`;
 }
 
-// Open admin directives (structured cues) currently attached to an artifact.
-export async function openDirectives(db: Db, artifactId: string): Promise<Directive[]> {
+// Open, actionable admin directives currently attached to an artifact (an action OR publish_after).
+export async function openDirectives(db: Db, artifactId: string): Promise<OpenDirective[]> {
   const { data } = await db
     .from("comments")
-    .select("directive")
+    .select("action, publish_after")
     .eq("artifact_id", artifactId)
-    .eq("status", "open")
-    .not("directive", "is", null);
+    .eq("status", "open");
   return (data ?? [])
-    .map((r) => r.directive)
-    .filter((d): d is Directive => d !== null);
+    .map((r) => ({ action: r.action, publish_after: r.publish_after }))
+    .filter((d) => d.action !== null || d.publish_after);
 }
 
 // Snapshot the artifact's current doc into revision history before a content write.
@@ -100,16 +103,15 @@ export function isWorkerTransitionAllowed(to: Status): boolean {
   return WORKER_TARGETS.has(to);
 }
 
-// Publishing requires the human gate: admin-'approved', or an open 'iterate_and_publish' cue.
-export function publishAuthorized(current: Status, directives: Directive[]): boolean {
-  return current === "approved" || directives.includes("iterate_and_publish");
+// Publishing requires the human gate: admin-'approved', or an open directive flagged publish_after.
+export function publishAuthorized(current: Status, directives: OpenDirective[]): boolean {
+  return current === "approved" || directives.some((d) => d.publish_after);
 }
 
-// Editing already-published content requires admin intent.
-const EDIT_LIVE: Directive[] = ["enhance", "iterate_and_publish", "revise"];
-export function editLiveAuthorized(directives: Directive[]): boolean {
-  return directives.some((d) => EDIT_LIVE.includes(d));
+// Editing already-published content requires an open 'revise' directive (the admin asked for it).
+export function editLiveAuthorized(directives: OpenDirective[]): boolean {
+  return directives.some((d) => d.action === "revise");
 }
-export function archiveLiveAuthorized(directives: Directive[]): boolean {
-  return directives.includes("archive");
+export function archiveLiveAuthorized(directives: OpenDirective[]): boolean {
+  return directives.some((d) => d.action === "archive");
 }

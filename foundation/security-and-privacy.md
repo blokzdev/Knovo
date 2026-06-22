@@ -36,7 +36,7 @@ guarantee cannot live in the prompt or a connector — it lives in a trusted API
 - The API (service-role, server-only) is the single enforcement point. It:
   - **validates** every document with zod before storage (invariant #9; HTTP 422 on failure),
   - enforces **status transitions** — workers may only target `needs_review`/`published`/
-    `archived`; `published` requires admin **approval or an `iterate_and_publish` directive**;
+    `archived`; `published` requires admin **approval or an open `publish_after` directive**;
     editing/archiving live content requires an admin directive,
   - **soft-deletes** only (`deleted_at`) — no hard delete or DDL is reachable,
   - **audit-logs** every mutation (`audit_log`) and snapshots prior versions (`revisions`).

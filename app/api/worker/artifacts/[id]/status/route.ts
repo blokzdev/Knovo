@@ -45,7 +45,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
   const directives = await openDirectives(db, current.id);
   if (to === "published" && !publishAuthorized(current.status as Status, directives)) {
-    return err(403, "publish_not_authorized", "Publishing requires admin approval or an 'iterate_and_publish' directive.");
+    return err(403, "publish_not_authorized", "Publishing requires admin approval or an open directive flagged publish_after.");
   }
   if (to === "archived" && current.status === "published" && !archiveLiveAuthorized(directives)) {
     return err(403, "archive_not_authorized", "Archiving a published artifact requires an 'archive' directive.");

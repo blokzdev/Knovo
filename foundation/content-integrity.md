@@ -20,11 +20,13 @@ over verifiable primary data.
 **public-publish action is admin-directed**, and the gate is enforced in the **Knovo API**,
 not just the UI:
 - Workers create and refine artifacts through the workflow (draft → needs_review → …).
-- The admin reviews in the dashboard HUD and expresses intent via **status markers and
-  comments/directives** (e.g. `iterate_and_publish`, `approved`, `enhance`, `archive`).
-- The API only lets a worker set `published` when the artifact is admin-`approved` **or**
-  carries an open `iterate_and_publish` directive; editing/archiving already-published content
-  likewise requires an admin directive. **Nothing reaches the public without admin intent.**
+- The admin reviews in the dashboard HUD and directs via **status markers** (`approved`,
+  `changes_requested`, …) and **directive comments** — two axes: an `action`
+  (`revise`/`make_series`/`archive`) and a `publish_after` toggle, plus a natural-language note.
+- The API only lets a worker set `published` when the artifact is admin-`approved` **or** an
+  open directive is flagged `publish_after`; editing a published article requires an open
+  `revise` directive, and archiving it requires an open `archive` directive. **Nothing reaches
+  the public without admin intent.**
 - **Rejected findings are not re-drafted.** Deletes are **soft** (recoverable); destructive
   and infra actions are never granted to a worker (`security-and-privacy.md`).
 
@@ -49,7 +51,7 @@ so it is always present and always accurate.
 ## Trust chain (end to end)
 ```
 primary source (stable id) ─► API-stored provenance + citation ─► zod-valid draft (API)
-   ─► admin reviews + directs (approve / iterate_and_publish) ─► worker publishes via API
+   ─► admin reviews + directs (approve, or revise + publish_after) ─► worker publishes via API
        ─► published with auto provenance footer + audit-log entry
    └─ admin rejects ─► terminal, never re-drafted
 ```

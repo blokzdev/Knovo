@@ -13,10 +13,10 @@ worker instructions live in `docs/routines.md`.
 - **Scout** — discovery/draft. Trawls the niche (bioRxiv, PubMed, ChEMBL, PDB-via-REST), grounds
   a finding in primary sources, and creates a **draft** via the API. Lowest trust (reads
   untrusted external text) → smallest verb set (`dedup`, `create`).
-- **Editor** — iterate/enhance/publish. Reads its **queue** (open admin directives/comments)
-  and acts: revises drafts in place, restructures into series, enhances live articles,
-  transitions status, and **publishes when the admin has directed it** (`approved` or an
-  `iterate_and_publish` directive). Larger verb set; acts on admin-reviewed intent.
+- **Editor** — iterate/enhance/publish. Reads its **queue** (open actionable directives) and
+  acts: revises drafts or live articles in place, restructures into series, transitions status,
+  and **publishes when the admin has directed it** (`approved`, or a directive flagged
+  `publish_after`). Larger verb set; acts on admin-reviewed intent.
 
 ## Pipeline (Scout)
 ```
@@ -30,13 +30,12 @@ worker instructions live in `docs/routines.md`.
 
 ## Loop (Editor — the collaborative HUD reaction)
 ```
-1. PULL      GET /worker/queue — open directives/comments paired with their artifact.
-2. ACT per directive:
-   - iterate_and_resubmit / revise → PATCH the doc, set status needs_review
-   - iterate_and_publish          → PATCH the doc, then POST status=published (gate satisfied)
-   - enhance (live article)       → PATCH the doc in place (directive authorizes editing live)
-   - make_series                  → POST /worker/series, attach artifacts
-   - archive                      → POST status=archived
+1. PULL      GET /worker/queue — actionable directives paired with their artifact. Each is
+             { action, publish_after, note, … }: an action (what to do) × a publish_after flag.
+2. ACT       a) DO: action `revise` → PATCH the doc per the note (drafts or live articles);
+                `make_series` → POST /worker/series; `archive` → POST status=archived.
+             b) THEN: if `publish_after` → POST status=published; else if a draft was revised →
+                POST status=needs_review.
 3. RESOLVE   POST /worker/comments/:id/resolve — mark the directive handled (leaves the queue).
 ```
 Every content write snapshots the prior version to `revisions`; every mutation is audit-logged.
@@ -45,7 +44,7 @@ Every content write snapshots the prior version to `revisions`; every mutation i
 - **Governed writes only.** All data access is via the Knovo API with the worker's bearer
   token. No Supabase connector, no service-role key, no direct DB. (`security-and-privacy.md`)
 - **Human-directed publish.** A worker can publish only when the artifact is admin-`approved`
-  or carries an open `iterate_and_publish` directive. Nothing reaches the public otherwise.
+  or an open directive is flagged `publish_after`. Nothing reaches the public otherwise.
 - **Source-grounded.** Every artifact has ≥1 `primary` source with a stable id + citation.
 - **Schema-bound.** Output is a slot document conforming to the current `schema_version`; the
   API zod-validates before storage. No layout code, no new vocabulary.

@@ -18,7 +18,7 @@ const body = z.object({
 
 // PATCH /worker/artifacts/:id — update an artifact's content in place. Re-validates the slot
 // document, snapshots the prior version to revisions (recoverability), and audits. Editing an
-// already-PUBLISHED artifact additionally requires an open admin directive (enhance/revise).
+// already-PUBLISHED artifact additionally requires an open admin 'revise' directive.
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
   const worker = authenticateWorker(req);
   if (!worker) return err(401, "unauthorized", "Missing or invalid worker token.");
@@ -40,7 +40,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (current.status === "published") {
     const directives = await openDirectives(db, current.id);
     if (!editLiveAuthorized(directives)) {
-      return err(403, "needs_directive", "Editing a published artifact requires an admin directive (enhance/revise).");
+      return err(403, "needs_directive", "Editing a published artifact requires an open admin 'revise' directive.");
     }
   }
 

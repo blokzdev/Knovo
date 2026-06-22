@@ -76,17 +76,26 @@ Join feeding the auto-rendered provenance footer.
 | created_at | timestamptz | |
 Artifacts join via `artifacts.series_id` (+ `series_order`).
 
-### comments — admin editorial signals (NOT public comments)
+### comments — admin editorial directives (NOT public comments)
+A directive has **two axes** — an optional `action` (what to do) and a `publish_after` flag
+(whether to publish when done) — plus a free-text `note` and optional advanced `options`. An
+*actionable* directive has an action OR is flagged publish_after; plain notes (neither) are a
+human record and do not enter the worker queue.
 | column | type | notes |
 |---|---|---|
 | id | uuid PK | |
 | artifact_id | uuid | FK → artifacts |
 | author | uuid | admin (FK auth.users); null for system |
-| body | text | natural-language note the worker reads |
-| directive | enum `comment_directive` | `iterate_and_resubmit` \| `iterate_and_publish` \| `enhance` \| `make_series` \| `revise` \| `archive` (nullable = plain note) |
+| note | text | natural-language instruction the worker obeys |
+| action | enum `directive_action` | `revise` \| `make_series` \| `archive` (nullable = plain note / publish-as-is) |
+| publish_after | bool | "...and publish when done" (the headline toggle); default `false` |
+| options | jsonb | optional advanced params (future: target series, tone/length, …) |
 | status | enum `comment_status` | `open` \| `addressed` \| `dismissed` |
 | created_at / addressed_at | timestamptz | |
 | addressed_by | text | worker that handled it |
+
+Examples: *iterate & publish* = `revise` + `publish_after:true`; *iterate & return for review* =
+`revise` + `publish_after:false`; *publish as-is* = `action:null` + `publish_after:true`.
 
 ### revisions — version history (recoverability)
 `(id, artifact_id FK, schema_version, doc jsonb, title, summary, note, created_by, created_at)`.
@@ -105,8 +114,8 @@ the API on every mutation (`actor` = `worker:scout|editor` or `admin:<uid>`).
 ```
 - Workers may target only `needs_review` / `published` / `archived` via the API; the admin
   owns `approved` / `changes_requested` / `rejected` (dashboard).
-- `published` requires admin **approval or an `iterate_and_publish` directive**; editing or
-  archiving a published artifact requires an admin directive.
+- `published` requires admin **approval or an open `publish_after` directive**; editing a
+  published artifact requires an open `revise` directive, archiving it an `archive` directive.
 - `rejected` is terminal; never re-drafted (see dedup). Nothing is hard-deleted by a worker —
   `deleted_at` is a recoverable soft-delete; public reads exclude it.
 
