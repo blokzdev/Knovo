@@ -31,8 +31,9 @@ guarantee cannot live in the prompt or a connector — it lives in a trusted API
 
 - Workers never touch Supabase directly. They call the **Knovo API** (`api.knovo.ai`) with a
   **per-worker bearer token** (`KNOVO_WORKER_TOKEN_*`) scoped to specific **verbs**
-  (`lib/worker-auth.ts`): Scout can dedup+create; Editor can also update/transition/resolve/
-  series.
+  (`lib/worker-auth.ts`): **Scout** = dedup/create; **Editor** = + update/status/resolve/series/
+  flag; **Keeper** = targets/update/status/flag (no create/series/resolve). A leaked token can
+  only do that worker's verbs, and never publish without an admin directive.
 - The API (service-role, server-only) is the single enforcement point. It:
   - **validates** every document with zod before storage (invariant #9; HTTP 422 on failure),
   - enforces **status transitions** — workers may only target `needs_review`/`published`/

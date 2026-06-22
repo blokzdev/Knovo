@@ -61,5 +61,8 @@ Every transition is recorded in `audit_log` (who/what), and prior doc versions a
 ## Open questions
 - Minimum citation completeness to accept a draft (e.g. require DOI for preprints?).
   Trigger: an admin can't verify a source from what was stored.
-- How to handle a primary source that is later retracted/updated after publish.
-  Trigger: first retraction of a cited source.
+- **Partly addressed (2026-06-22):** the **Keeper** worker periodically re-verifies published
+  artifacts' primary sources and **flags** retractions/material updates to the admin (it does not
+  edit live content itself). Open: the cadence/SLA for the sweep and whether a confirmed
+  retraction should auto-`archive` pending admin review. Trigger: first retraction of a cited
+  source.

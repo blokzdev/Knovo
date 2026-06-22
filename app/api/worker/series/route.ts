@@ -3,15 +3,21 @@ import { authenticateWorker } from "@/lib/worker-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { audit, err, json, slugify, type Db } from "@/lib/worker-api";
 
-const body = z.object({
-  title: z.string().min(1),
-  summary: z.string().optional(),
-  slug: z.string().optional(),
-  artifactIds: z.array(z.string().uuid()).default([]),
-});
+const body = z
+  .object({
+    seriesId: z.string().uuid().optional(),
+    title: z.string().min(1).optional(),
+    summary: z.string().optional(),
+    slug: z.string().optional(),
+    artifactIds: z.array(z.string().uuid()).default([]),
+  })
+  .refine((b) => b.seriesId || b.title, {
+    message: "provide seriesId (add_to_series) or title (make_series)",
+  });
 
-// POST /worker/series — create a series (collection) and optionally attach artifacts in order,
-// for the 'make_series' directive. Series are public-readable; membership is set on artifacts.
+// POST /worker/series — create a series ('make_series') OR attach to an existing one
+// ('add_to_series', via seriesId). Attached artifacts get series_id + an appended series_order.
+// Series are public-readable; membership lives on the artifacts.
 export async function POST(req: Request) {
   const worker = authenticateWorker(req);
   if (!worker) return err(401, "unauthorized", "Missing or invalid worker token.");
@@ -19,23 +25,49 @@ export async function POST(req: Request) {
 
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return err(400, "bad_request", parsed.error.issues.map((i) => i.message).join("; "));
-  const { title, summary, artifactIds } = parsed.data;
+  const { seriesId, title, summary, artifactIds } = parsed.data;
 
   const db = createAdminClient();
-  const slug = await uniqueSeriesSlug(db, parsed.data.slug ?? title);
-  const { data: series, error: insErr } = await db
-    .from("series")
-    .insert({ slug, title, summary: summary ?? null })
-    .select("id, slug")
-    .single();
-  if (insErr || !series) return err(500, "series_write_failed", insErr?.message ?? "series insert failed");
 
-  for (let i = 0; i < artifactIds.length; i++) {
-    await db.from("artifacts").update({ series_id: series.id, series_order: i }).eq("id", artifactIds[i]);
+  let series: { id: string; slug: string };
+  let startOrder = 0;
+  if (seriesId) {
+    const { data: existing, error: readErr } = await db
+      .from("series")
+      .select("id, slug")
+      .eq("id", seriesId)
+      .maybeSingle();
+    if (readErr) return err(500, "series_read_failed", readErr.message);
+    if (!existing) return err(404, "not_found", "Series not found.");
+    series = existing;
+    const { count } = await db
+      .from("artifacts")
+      .select("id", { count: "exact", head: true })
+      .eq("series_id", series.id);
+    startOrder = count ?? 0;
+  } else {
+    const slug = await uniqueSeriesSlug(db, parsed.data.slug ?? title!);
+    const { data: created, error: insErr } = await db
+      .from("series")
+      .insert({ slug, title: title!, summary: summary ?? null })
+      .select("id, slug")
+      .single();
+    if (insErr || !created) return err(500, "series_write_failed", insErr?.message ?? "series insert failed");
+    series = created;
   }
 
-  await audit(db, `worker:${worker.id}`, "series_create", null, { series_id: series.id, attached: artifactIds.length });
-  return json({ id: series.id, slug: series.slug }, 201);
+  for (let i = 0; i < artifactIds.length; i++) {
+    await db
+      .from("artifacts")
+      .update({ series_id: series.id, series_order: startOrder + i })
+      .eq("id", artifactIds[i]);
+  }
+
+  await audit(db, `worker:${worker.id}`, seriesId ? "series_attach" : "series_create", null, {
+    series_id: series.id,
+    attached: artifactIds.length,
+  });
+  return json({ id: series.id, slug: series.slug }, seriesId ? 200 : 201);
 }
 
 // Series have their own slug namespace; resolve uniqueness against the series table.

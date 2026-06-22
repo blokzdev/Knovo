@@ -88,31 +88,46 @@ Note: Vercel **Hobby** is non-commercial; moving to ads/paid requires **Pro**.
 1. **Vercel domain.** `api.knovo.ai` is CNAME'd to Vercel — add it as a domain on the Knovo
    Vercel project (same app). `middleware.ts` host-routes `api.knovo.ai/<path>` →
    `/api/worker/<path>`.
-2. **Worker tokens.** Generate two long random secrets (`openssl rand -hex 32`):
-   - `KNOVO_WORKER_TOKEN_SCOUT`, `KNOVO_WORKER_TOKEN_EDITOR`.
+2. **Worker tokens.** Generate three long random secrets (`openssl rand -hex 32`):
+   - `KNOVO_WORKER_TOKEN_SCOUT`, `KNOVO_WORKER_TOKEN_EDITOR`, `KNOVO_WORKER_TOKEN_KEEPER`.
    Set them in the **Vercel env** (so the API can verify) — server-only, never `NEXT_PUBLIC_`.
 3. **Routine fire (dashboard "run now").** After creating each routine (step 7), add an **API
    trigger** and copy its URL + `sk-ant-oat01-…` token into Vercel env as
-   `ROUTINE_SCOUT_FIRE_URL`/`ROUTINE_SCOUT_TOKEN` and `ROUTINE_EDITOR_FIRE_URL`/
-   `ROUTINE_EDITOR_TOKEN`. `KNOVO_API_BASE = https://api.knovo.ai`.
+   `ROUTINE_SCOUT_FIRE_URL`/`ROUTINE_SCOUT_TOKEN`, `ROUTINE_EDITOR_FIRE_URL`/`ROUTINE_EDITOR_TOKEN`,
+   and `ROUTINE_KEEPER_FIRE_URL`/`ROUTINE_KEEPER_TOKEN`. `KNOVO_API_BASE = https://api.knovo.ai`.
 
 The API uses `SUPABASE_SERVICE_ROLE_KEY` server-side and enforces zod validation, the
 admin-directed publish gate, audit logging, and soft-delete. Never give a worker the
 service-role key or the Supabase connector.
 
-## 7. Create the two routines (Claude web app)
-In claude.ai/code/routines, create **Scout** and **Editor** per `docs/routines.md` (names,
-triggers, connectors, paste-ready instructions). For each routine's **cloud environment**:
+## 7. Create the three routines (Claude web app)
+In claude.ai/code/routines, create **Scout**, **Editor**, and **Keeper** per `docs/routines.md`
+(names, triggers, connectors, paste-ready instructions). For each routine's **cloud environment**:
 - **Network access → Custom:** allow `api.knovo.ai`, `data.rcsb.org`, `files.rcsb.org`.
 - **Environment variables:** `KNOVO_API_BASE=https://api.knovo.ai` and the matching
-  `KNOVO_WORKER_TOKEN_SCOUT`/`_EDITOR` (same value as Vercel).
-- **Connectors:** Scout = bioRxiv/ChEMBL/PubMed; Editor = + tldraw; remove all others
+  `KNOVO_WORKER_TOKEN_SCOUT` / `_EDITOR` / `_KEEPER` (same value as Vercel).
+- **Connectors:** Scout & Keeper = bioRxiv/ChEMBL/PubMed; Editor = + tldraw; remove all others
   (especially Supabase).
-Add Scout's **Schedule** (daily) and an **API** trigger; Editor gets an **API** trigger (+
-optional hourly schedule). Whenever schema/connectors/flow change, regenerate `docs/routines.md`
+Triggers: Scout = Schedule (daily) + API; Editor = API (+ optional hourly sweep); Keeper =
+Schedule (weekly) + API. Whenever schema/connectors/flow change, regenerate `docs/routines.md`
 and re-paste.
 
 ## Migrations
 SQL lives in `supabase/migrations/` (`0001`–`0004`). Apply new migrations to **dev first, then
-prod**, and keep both projects in sync (Supabase MCP `apply_migration`, or `supabase db push`).
-Regenerate `lib/database.types.ts` after schema changes.
+prod**, keep both in sync, and regenerate `lib/database.types.ts` after schema changes.
+
+**Apply `0004` via the Supabase dashboard** (works without the CLI):
+1. Open the **dev** project (`knovo-dev`, ref `hgsgnaeevqviwagepgsw`) → **SQL Editor** → **New
+   query**.
+2. Paste the entire contents of `supabase/migrations/0004_editorial_workflow.sql` and click
+   **Run**. It should report success (it adds the enum values, new tables, RLS, and drops the old
+   `knovo_routine` role).
+   - *If* you get `ALTER TYPE ... ADD VALUE cannot run inside a transaction block`, run the four
+     `alter type public.artifact_status add value …` lines **first** (one query), then run the
+     rest of the file.
+3. Repeat exactly on the **prod** project (`knovo-prod`, ref `flltjufyzbxicnpqpuij`).
+4. **Verify** (either project): Table Editor shows `series`, `comments`, `revisions`, `audit_log`;
+   **Advisors → Security** shows no new errors. (Optional: `select unnest(enum_range(null::public.directive_action));`
+   lists the 8 actions.)
+5. Tell me when it's applied and I'll regenerate `lib/database.types.ts` from the live schema and
+   run the worker-API smoke test.

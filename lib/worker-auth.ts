@@ -5,7 +5,7 @@ import { timingSafeEqual } from "crypto";
 // the amended least-privilege model (Decision #4): scope is enforced by the API per worker,
 // not by a shared DB role or the prompt.
 
-export type WorkerId = "scout" | "editor";
+export type WorkerId = "scout" | "editor" | "keeper";
 export type Verb =
   | "dedup"
   | "queue"
@@ -13,12 +13,14 @@ export type Verb =
   | "update"
   | "status"
   | "resolve"
-  | "series";
+  | "series"
+  | "flag"
+  | "targets";
 
 const VERBS: Record<WorkerId, ReadonlySet<Verb>> = {
   // Scout discovers and drafts only.
   scout: new Set<Verb>(["dedup", "create"]),
-  // Editor iterates, transitions, resolves directives, and curates series.
+  // Editor iterates, transitions, resolves directives, curates series, and can flag issues.
   editor: new Set<Verb>([
     "dedup",
     "queue",
@@ -27,13 +29,22 @@ const VERBS: Record<WorkerId, ReadonlySet<Verb>> = {
     "status",
     "resolve",
     "series",
+    "flag",
   ]),
+  // Keeper sweeps published artifacts, reverifies sources (update), can transition, and flags
+  // drift to the admin. No create/series/resolve.
+  keeper: new Set<Verb>(["targets", "update", "status", "flag"]),
 };
 
 function tokenFor(worker: WorkerId): string | undefined {
-  return worker === "scout"
-    ? process.env.KNOVO_WORKER_TOKEN_SCOUT
-    : process.env.KNOVO_WORKER_TOKEN_EDITOR;
+  switch (worker) {
+    case "scout":
+      return process.env.KNOVO_WORKER_TOKEN_SCOUT;
+    case "editor":
+      return process.env.KNOVO_WORKER_TOKEN_EDITOR;
+    case "keeper":
+      return process.env.KNOVO_WORKER_TOKEN_KEEPER;
+  }
 }
 
 function safeEqual(a: string, b: string): boolean {
