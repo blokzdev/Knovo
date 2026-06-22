@@ -102,10 +102,15 @@ drop policy if exists sources_routine_read             on public.sources;
 drop policy if exists sources_routine_insert           on public.sources;
 drop policy if exists artifact_sources_routine_read    on public.artifact_sources;
 drop policy if exists artifact_sources_routine_insert  on public.artifact_sources;
+-- Revoke the grants 0001 gave knovo_routine (the only thing blocking DROP ROLE), then drop it.
+-- We avoid `drop owned by` / `grant ... to current_user`: those need the migrating role to be a
+-- member of knovo_routine, which it isn't on Supabase — and that path drops the SQL-editor
+-- connection. Explicit REVOKE only needs table/schema ownership, which the migrating role has.
 do $$ begin
   if exists (select 1 from pg_roles where rolname = 'knovo_routine') then
-    execute 'drop owned by knovo_routine';
-    execute 'drop role knovo_routine';
+    revoke all on all tables in schema public from knovo_routine;
+    revoke all on schema public from knovo_routine;
+    drop role knovo_routine;
   end if;
 end $$;
 

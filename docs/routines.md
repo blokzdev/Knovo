@@ -183,6 +183,10 @@ Process the batch and stop. Prefer flagging over guessing; never fabricate a cor
 ---
 
 ## Change log
+- **No routine change — 2026-06-22 (`0005` reader engagement).** Phase 1d added reader accounts,
+  bookmarks, public `reader_comments`, and `subscriptions`. These live **outside** the worker API
+  and slot schema — the worker-facing schema, connectors, and generation flow are unchanged — so
+  the routine instructions below are still current (no paste-ready update required).
 - **v3 (2026-06-22)** — expanded the editorial team. Added **Keeper** (source re-verification +
   admin flags) and a richer directive-action set (`expand`, `condense`, `reverify`, `split`,
   `add_to_series`) on top of the two-axis (action × publish_after) model; worker→admin `flag`

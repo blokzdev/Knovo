@@ -48,6 +48,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin/library" className="rounded-md px-3 py-1.5 text-neutral-600 hover:bg-neutral-100">
               Library
             </Link>
+            <Link href="/admin/moderation" className="rounded-md px-3 py-1.5 text-neutral-600 hover:bg-neutral-100">
+              Discussion
+            </Link>
           </nav>
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden text-xs text-neutral-400 sm:inline">{ctx.user.email}</span>
