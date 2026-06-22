@@ -35,14 +35,28 @@ npm run dev        # http://localhost:3000
 
 ## 3. Google OAuth (admin login)
 1. **Google Cloud Console → APIs & Services → Credentials → Create OAuth client ID → Web.**
-2. Authorized redirect URI (Supabase handles the exchange):
-   `https://<project-ref>.supabase.co/auth/v1/callback` (use the **dev** ref for dev).
-3. Copy the client ID + secret.
-4. **Supabase dashboard → Authentication → Providers → Google:** enable, paste client ID +
-   secret, save.
-5. **Authentication → URL Configuration:** add `http://localhost:3000/auth/callback` (dev)
-   and your Vercel URL `/auth/callback` (prod) to the redirect allow-list.
-6. Put the same client ID/secret in `.env.local` (kept for lockstep/documentation).
+2. **Authorized JavaScript origins** — your *app* origin(s), scheme + host only, **no path**:
+   - `https://knovo.ai` and `https://www.knovo.ai` (prod)
+   - `http://localhost:3000` (local dev)
+   - This field is only load-bearing for Google's in-browser SDK (One Tap / the nonce-based
+     button). The standard Supabase redirect login does **not** depend on it, but the
+     Supabase docs still say to add the app URL here — so add it and move on. Do **not** put
+     the `…supabase.co/...` URL here.
+3. **Authorized redirect URIs** — the *Supabase* callback (Supabase performs the exchange):
+   `https://<project-ref>.supabase.co/auth/v1/callback`
+   (use the **dev** ref for the dev client, the **prod** ref for the prod client).
+4. Copy the client ID + secret.
+5. **Supabase dashboard → Authentication → Providers → Google:** enable, paste client ID +
+   secret, save. (Do this on **both** the dev and prod projects with their respective clients.)
+6. **Authentication → URL Configuration:**
+   - **Site URL:** set to your **canonical** host. Because Vercel redirects the apex to `www`
+     (see §5), the canonical host is **`https://www.knovo.ai`** — set the Site URL to that, not
+     the bare apex, so post-login redirects don't take an extra 301 hop.
+   - **Redirect URLs (allow-list):** entries must match the *redirect destination* path, so use
+     path wildcards, not bare origins:
+     `https://www.knovo.ai/**`, `https://knovo-ai.vercel.app/**`, `http://localhost:3000/**`.
+     A bare `https://www.knovo.ai` will **not** match `/auth/callback` and login will fail.
+7. Put the client ID/secret in `.env.local` / Vercel env (kept for lockstep/documentation).
 
 The app route `app/auth/callback/route.ts` exchanges the code for a session and redirects
 to `/admin`.
@@ -58,6 +72,13 @@ update public.profiles set role = 'admin' where email = 'YOU@example.com';
 Set env vars in the Vercel project (Production → **prod** Supabase values; Preview/Dev →
 **dev**). `SUPABASE_SERVICE_ROLE_KEY` is **server-only** — never prefix `NEXT_PUBLIC_`.
 Note: Vercel **Hobby** is non-commercial; moving to ads/paid requires **Pro**.
+
+**Domain.** `knovo.ai` is the production domain with **apex → `www` redirect** enabled, so
+`https://www.knovo.ai` is the **canonical** host. Keep this consistent everywhere:
+- Supabase **Site URL** = `https://www.knovo.ai` (see §3.6).
+- Google OAuth **JavaScript origins** include both apex and `www` (see §3.2).
+- The Google **Branding** privacy/terms links use the apex (`https://knovo.ai/legal/...`);
+  those 301 to `www`, which is fine for verification.
 
 ## 6. The autonomous routine credential (remaining wiring — tracked in BACKLOG.md)
 The migration defines a least-privilege `knovo_routine` Postgres role (INSERT-only on

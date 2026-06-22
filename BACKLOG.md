@@ -16,6 +16,8 @@ mirrors into the Open questions section here.
 | **Social preview cards** | Distribution polish, not core trust/quality. | Sharing to social drives meaningful traffic. |
 | **Public accounts & comments** | Public is read-only at launch (Decision 5); schema already accommodates them (profiles + role). | Validated audience wants to save/bookmark/discuss. |
 | **Monetization / payments** | No payments at MVP (Decision 7); requires Vercel Pro (Hobby is non-commercial). | Audience validated and a paid/ad model is chosen. |
+| **SEO / OG / PWA polish** | Phase 0 branding was scoped to "unblock Google OAuth verification" (logo, favicon/app icons, MDX legal pages) only. OpenGraph/Twitter cards, sitemap, robots, web manifest, installable PWA deferred. | Phase 3 (site experience) or first public launch — see roadmap Phase 3. |
+| **Rich marketing/legal/app pages** | Phase 0 `/legal/*` pages are intentionally minimal; landing/about/browse design deferred. | Phase 3 — content engine proven, ready to invest in public presence. |
 
 ---
 
@@ -76,6 +78,14 @@ mirrors into the Open questions section here.
   auth in Phase 0 Part B.
 - Admin audit log beyond `reviewed_by`/`reviewed_at`. *Trigger:* first need to answer "who
   changed this and when".
+
+### Site / branding (Phase 0 deploy)
+- **Legal copy is unreviewed starter text.** `app/legal/privacy` and `app/legal/terms` were
+  drafted to match Knovo's real architecture but are **not** legal advice. *Trigger:* before
+  public launch / before relying on them — get a qualified human review; replace the
+  `privacy@knovo.ai` / `legal@knovo.ai` contact addresses and confirm the subprocessor list.
+- **Logo is an SVG wordmark/monogram, not a bespoke designed mark.** *Trigger:* a brand/design
+  pass (Phase 3) if a richer identity is wanted.
 
 ### deployment.md
 - Custom domain + when to provision. *Trigger:* first public launch.
