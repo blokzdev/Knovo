@@ -27,7 +27,7 @@ Every slot carries a stable `id` (string). Relationships are expressed by id ref
 ### stage — the primary visualization surface
 Discriminated union on `kind`:
 
-- **`molecular3d`** (rendered with three.js):
+- **`molecular3d`** (rendered with 3Dmol.js):
   ```jsonc
   { "id": "stage", "kind": "molecular3d",
     "source": { "db": "pdb", "uid": "8ABC" },   // resolves to a structure
@@ -195,7 +195,9 @@ Provenance: ChEMBL `CHEMBL123` (primary) with bioactivity citation + the source 
 ## Open questions
 - Allow more than one stage per artifact (e.g. structure + chart side by side)? v1 = one
   stage. Trigger: a finding genuinely needs two co-equal hero surfaces.
-- Exact `param` grammar for controls (dotted path vs. typed enum). v1 uses dotted paths
-  validated per stage kind. Trigger: paths become error-prone for authors.
-- three.js `selection` grammar (subset of PDB selection language) needs a v1 spec.
-  Trigger: implementing the molecular3d renderer in Phase 1.
+- **Being resolved (1b-follow PR1):** exact `param` grammar for controls (dotted path vs. typed
+  enum). v1 keeps dotted paths with a per-stage-kind whitelist; proposed in
+  `docs/renderer-hardening.md`, normative here when PR1 lands.
+- **Being resolved (1b-follow PR1):** the 3Dmol.js `selection` grammar (subset of PDB selection
+  language) — proposed v1 subset in `docs/renderer-hardening.md`; PR1 implements `parseSelection`
+  → 3Dmol `AtomSelectionSpec` and maps `highlights[].selection` to colored styles.

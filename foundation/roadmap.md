@@ -35,9 +35,16 @@ revisions, series, audit, soft-delete); the **Scout + Editor + Keeper** worker s
 - **Shared `<ArtifactRenderer>` v1:** real charts (recharts) + real 3D molecular viewer
   (3Dmol.js) + panels/captions + auto provenance footer; basic controls. shadcn/ui design system.
 
-**1b-follow — renderer hardening (next PRs):** tldraw `diagram` rendering; full control→stage
-param-grammar interactivity; immersive responsive mode; the molecular3d highlight **selection
-grammar** (now triggered).
+**1b-follow — renderer hardening (in progress):** close the gap between the slot schema (ahead)
+and the renderer. Plan of record + the v1 param/selection grammars: `docs/renderer-hardening.md`.
+One branch/PR each, owner merges between:
+- **PR0 (done):** migration `0007` (clear security advisors 0028/0029 on the reader-comment stamp
+  trigger fn) + capture this plan into the docs.
+- **PR1:** interactive control→stage param-grammar (lift control state, controlled `ControlsBar`)
+  **+** molecular3d highlight **selection grammar** → 3D (colored overlays, per-highlight toggle,
+  spin) and chart `axes.y.log`. Adds a vitest test runner; regenerates `docs/routines.md`.
+- **PR2:** tldraw `diagram` rendering (read-only snapshot, lazy/client-only).
+- **PR3:** immersive responsive mode (fullscreen stage / drawer panels / overlay controls).
 
 **1c — Public read site (DONE 2026-06-22):** SSR live-published artifacts at clean URLs
 (`/a/<slug>`) via the shared `<ArtifactRenderer>`, with generateMetadata + JSON-LD
