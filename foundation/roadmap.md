@@ -27,13 +27,20 @@ admin login; basic CI; env vars + committed `.env.example`.
 revisions, series, audit, soft-delete); the **Scout + Editor + Keeper** worker specs
 (`docs/routines.md`).
 
-**1b — Admin dashboard HUD + renderer (next):**
-- The **control HUD:** queue across statuses, rendered preview, source verification, leave
-  comments + set directives/status, publish/reject, **run-now / fire-worker** buttons.
-- **The single responsive renderer:** three.js / tldraw / charts across portrait/landscape/
-  immersive, with the auto provenance footer (also powers the HUD preview).
+**1b — Admin dashboard HUD + faithful renderer v1 (DONE 2026-06-22):**
+- The **control HUD** (`/admin`): status queue + counts, the action queue + open flags, worker
+  dispatch (run-now), library, and the artifact review surface — inline preview, directive
+  composer (action × publish_after + note), status controls (approve/publish/reject/archive/
+  soft-delete), revisions + audit tabs, "send to Editor now". Audited admin server actions.
+- **Shared `<ArtifactRenderer>` v1:** real charts (recharts) + real 3D molecular viewer
+  (3Dmol.js) + panels/captions + auto provenance footer; basic controls. shadcn/ui design system.
 
-**1c — Public read site:** SSR live-published artifacts at clean URLs with JSON-LD; series pages.
+**1b-follow — renderer hardening (next PRs):** tldraw `diagram` rendering; full control→stage
+param-grammar interactivity; immersive responsive mode; the molecular3d highlight **selection
+grammar** (now triggered).
+
+**1c — Public read site:** SSR live-published artifacts at clean URLs with JSON-LD; series pages
+(reuses `<ArtifactRenderer>`).
 
 **Phase 1 gate (sketch):** a worker drafts a real finding via the API; the admin reviews,
 comments/directs in the HUD, and the Editor iterates and publishes on direction; the published
