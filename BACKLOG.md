@@ -18,8 +18,10 @@ mirrors into the Open questions section here.
 | **Monetization / payments** | No payments at MVP (Decision 7); requires Vercel Pro (Hobby is non-commercial). | Audience validated and a paid/ad model is chosen. |
 | **SEO / OG / PWA polish** | Phase 0 branding was scoped to "unblock Google OAuth verification" (logo, favicon/app icons, MDX legal pages) only. OpenGraph/Twitter cards, sitemap, robots, web manifest, installable PWA deferred. | Phase 3 (site experience) or first public launch — see roadmap Phase 3. |
 | **Rich marketing/legal/app pages** | Phase 0 `/legal/*` pages are intentionally minimal; landing/about/browse design deferred. | Phase 3 — content engine proven, ready to invest in public presence. |
-| **Admin dashboard HUD** | Governed-autonomy pivot (2026-06-22) built the API + worker specs first ("foundation first"). The control HUD (queue, preview, comments, directives, publish/reject, run-now/fire buttons) is the next milestone. | Phase 1b — immediately after foundation lands. |
-| **Single responsive renderer** | Needed for the HUD preview + public read site; deferred with the HUD. | Phase 1b. |
+| **Admin dashboard HUD** | ✅ Delivered (Phase 1b, 2026-06-22): queue, preview, directive composer, status controls, workers dispatch, revisions/audit. | — (done) |
+| **Renderer hardening** | `<ArtifactRenderer>` v1 ships real charts + 3D + panels/captions/provenance. Deferred: tldraw `diagram` rendering, full control→stage param-grammar interactivity, immersive responsive mode, molecular3d highlight selection→3D mapping. | Phase 1b-follow / when an artifact needs the deferred capability. |
+| **Public read site wiring** | The shared `<ArtifactRenderer>` is built but only used in the admin HUD; public `app/a/[slug]` is still a stub. | Phase 1c — wire renderer + JSON-LD + series pages. |
+| **Admin manual full-doc editing** | Admin directs the Editor worker to change content; no in-dashboard slot editor. | Admin needs to hand-edit a doc without a worker. |
 | **Fully-autonomous publish worker** | Current model requires an admin directive to publish. A worker that publishes without per-item direction is possible but deliberately not built. | Admin trusts the pipeline enough to drop the per-item publish gate. |
 | **File attachments to worker directives** | The routine API trigger payload is text-only (no files). Admin file hand-off would go via storage + a referenced URL. | Admin needs to attach a file/image to a directive. |
 | **Public series pages** | `series` table + membership exist; public series routes not built. | Public read site (Phase 1c). |
@@ -77,8 +79,10 @@ mirrors into the Open questions section here.
 - Allow more than one stage per artifact? (v1: one.) *Trigger:* a finding needs two
   co-equal hero surfaces.
 - Control `param` grammar (dotted path vs. typed enum). *Trigger:* paths become error-prone.
-- three.js `selection` grammar (subset of PDB selection language) needs a v1 spec.
-  *Trigger:* implementing the molecular3d renderer in Phase 1.
+- **Triggered (2026-06-22):** the molecular3d highlight `selection` grammar (subset of PDB
+  selection language) needs a v1 spec — the renderer now loads structures + representations but
+  does **not** yet map `highlights[].selection` to 3D styles (highlights are listed as captions).
+  *Resolve before:* highlight-driven 3D emphasis is needed.
 
 ### security-and-privacy.md
 - **Resolved (2026-06-22):** least-privilege is the **governed Knovo API with per-worker
