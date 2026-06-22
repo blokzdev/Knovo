@@ -219,6 +219,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_url: string | null
           created_at: string
           display_name: string | null
           email: string | null
@@ -226,6 +227,7 @@ export type Database = {
           role: Database["public"]["Enums"]["user_role"]
         }
         Insert: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -233,6 +235,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["user_role"]
         }
         Update: {
+          avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -339,8 +342,126 @@ export type Database = {
         }
         Relationships: []
       }
+      bookmarks: {
+        Row: {
+          artifact_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          artifact_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          artifact_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reader_comments: {
+        Row: {
+          artifact_id: string
+          author_id: string
+          body: string
+          created_at: string
+          edited: boolean
+          id: string
+          status: Database["public"]["Enums"]["reader_comment_status"]
+          updated_at: string
+        }
+        Insert: {
+          artifact_id: string
+          author_id: string
+          body: string
+          created_at?: string
+          edited?: boolean
+          id?: string
+          status?: Database["public"]["Enums"]["reader_comment_status"]
+          updated_at?: string
+        }
+        Update: {
+          artifact_id?: string
+          author_id?: string
+          body?: string
+          created_at?: string
+          edited?: boolean
+          id?: string
+          status?: Database["public"]["Enums"]["reader_comment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_comments_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reader_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          scope: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          scope?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          scope?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          id: string | null
+        }
+        Relationships: []
+      }
       rejected_source_keys: {
         Row: {
           source_db: Database["public"]["Enums"]["source_db"] | null
@@ -369,6 +490,7 @@ export type Database = {
         | "approved"
         | "archived"
       comment_status: "open" | "addressed" | "dismissed"
+      reader_comment_status: "visible" | "hidden" | "removed"
       directive_action:
         | "revise"
         | "expand"

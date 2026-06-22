@@ -111,6 +111,32 @@ export async function setDeleted(input: { artifactId: string; deleted: boolean }
   }
 }
 
+// Moderate a public reader comment (hide/remove/restore). Audited like every admin write.
+export async function moderateReaderComment(input: {
+  commentId: string;
+  to: Database["public"]["Enums"]["reader_comment_status"];
+  artifactId?: string;
+  slug?: string;
+}): Promise<Result> {
+  try {
+    const { user } = await requireAdmin();
+    const db = createAdminClient();
+    const { error } = await db
+      .from("reader_comments")
+      .update({ status: input.to })
+      .eq("id", input.commentId);
+    if (error) return { ok: false, error: error.message };
+    await audit(db, `admin:${user.id}`, `reader_comment:${input.to}`, input.artifactId ?? null, {
+      comment_id: input.commentId,
+    });
+    revalidatePath("/admin/moderation");
+    if (input.slug) revalidatePath(`/a/${input.slug}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Failed." };
+  }
+}
+
 // Fire a worker routine on demand (dashboard "run now"). Returns the session URL to watch.
 export async function dispatchWorker(input: {
   worker: WorkerId;

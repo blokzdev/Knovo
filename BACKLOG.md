@@ -14,9 +14,11 @@ mirrors into the Open questions section here.
 | **3D poster / thumbnail generation** | Not needed to validate audience; adds rendering/storage complexity. | Need shareable previews or gallery thumbnails for published artifacts. |
 | **PDF export to Google Drive** | Out of MVP loop (draft → review → publish → read). | A user/admin needs offline or archival exports. |
 | **Social preview cards** | Distribution polish, not core trust/quality. | Sharing to social drives meaningful traffic. |
-| **Public accounts & comments** | Public is read-only at launch (Decision 5); schema already accommodates them (profiles + role). | Validated audience wants to save/bookmark/discuss. |
+| **Public accounts & comments** | ✅ Delivered (Phase 1d, 2026-06-22, `0005`): reader Google sign-in, bookmarks, moderated public comments, subscribe (RSS + recorded intent). Decision 5 amended. | — (done) |
+| **Subscription email** | Subscribe records intent + RSS feed now; transactional email needs a provider. | Pick a provider (e.g. Resend); send a digest/notify on publish. |
+| **Reader comments: threading & reactions** | v1 reader comments are flat; no votes/reactions; profile is read-only from Google (no self-edit). | Engagement demand + a moderation/abuse story to scale. |
 | **Monetization / payments** | No payments at MVP (Decision 7); requires Vercel Pro (Hobby is non-commercial). | Audience validated and a paid/ad model is chosen. |
-| **SEO / OG / PWA polish** | Phase 0 branding was scoped to "unblock Google OAuth verification" (logo, favicon/app icons, MDX legal pages) only. OpenGraph/Twitter cards, sitemap, robots, web manifest, installable PWA deferred. | Phase 3 (site experience) or first public launch — see roadmap Phase 3. |
+| **SEO / OG / PWA polish** | Phase 1c shipped sitemap, robots, RSS, JSON-LD, and OpenGraph on artifacts. Still deferred: Twitter cards, generated OG images, web manifest, installable PWA. | Phase 3 (site experience) or first public launch — see roadmap Phase 3. |
 | **Rich marketing/legal/app pages** | Phase 0 `/legal/*` pages are intentionally minimal; landing/about/browse design deferred. | Phase 3 — content engine proven, ready to invest in public presence. |
 | **Admin dashboard HUD** | ✅ Delivered (Phase 1b, 2026-06-22): queue, preview, directive composer, status controls, workers dispatch, revisions/audit. | — (done) |
 | **Renderer hardening** | `<ArtifactRenderer>` v1 ships real charts + 3D + panels/captions/provenance. Deferred: tldraw `diagram` rendering, full control→stage param-grammar interactivity, immersive responsive mode, molecular3d highlight selection→3D mapping. | Phase 1b-follow / when an artifact needs the deferred capability. |

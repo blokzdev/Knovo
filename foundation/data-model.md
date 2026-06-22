@@ -3,10 +3,12 @@
 The schema is designed now to accommodate later public accounts/bookmarks/comments
 (`profiles` + `role` already present) without building those features at MVP.
 
-*(Amended 2026-06-22 — migration `0004_editorial_workflow` added the governed editorial
-workflow: an expanded status lifecycle, admin `comments`/directives, `revisions` history,
-`series`, an `audit_log`, and soft-delete. Public social comments are still NOT built; the new
-`comments` are admin-only control signals.)*
+*(Amended 2026-06-22 — `0004_editorial_workflow` added the governed editorial workflow: an
+expanded status lifecycle, admin `comments`/directives, `revisions` history, `series`, an
+`audit_log`, and soft-delete. `0005_reader_engagement` then added public reader accounts —
+`bookmarks`, public `reader_comments`, `subscriptions`, and the `public_profiles` view. Note the
+two comment tables are distinct: admin-only `comments` (control signals) vs. public
+`reader_comments` (social).)*
 
 ## Tables
 
@@ -105,6 +107,19 @@ The Knovo API snapshots the prior `doc` here before every content write.
 `(id, actor text, action text, artifact_id FK nullable, detail jsonb, created_at)`. Written by
 the API on every mutation (`actor` = `worker:scout|editor` or `admin:<uid>`).
 
+## Reader engagement *(0005 — Phase 1d)*
+Reader-owned tables, **outside** the worker API + slot schema (the worker surface is unchanged).
+- **profiles** gain `avatar_url`; `handle_new_user` now captures `display_name`/`avatar_url` from
+  the Google identity. Profile is read-only from Google in v1 (no self-update → no role escalation).
+- **public_profiles** — a `SECURITY DEFINER` view exposing only `(id, display_name, avatar_url)`,
+  granted to anon/authenticated, so comment authors render without leaking email/role.
+- **bookmarks** `(user_id FK→profiles, artifact_id FK→artifacts, created_at, PK(user_id,artifact_id))` — private.
+- **reader_comments** `(id, artifact_id FK, author_id FK→profiles, body, status enum
+  reader_comment_status{visible|hidden|removed}, edited, created_at, updated_at)` — public social
+  comments, **distinct** from the editorial `comments` table. Admin moderates via status.
+- **subscriptions** `(id, user_id FK→profiles, scope='all', created_at, UNIQUE(user_id,scope))` —
+  records intent; RSS now, email later.
+
 ## Status lifecycle *(amended 2026-06-22)*
 ```
   draft ─► needs_review ⇄ changes_requested ─► approved ─► published
@@ -137,6 +152,9 @@ governance is enforced in the API, not RLS.**
 - `sources` / `artifact_sources`: public reads rows tied to a live published artifact.
 - `series`: public SELECT; admin writes.
 - `comments` / `revisions` / `audit_log`: admin-only (no anon); written by the API.
+- `bookmarks` / `subscriptions`: private to the owner (`user_id = auth.uid()`).
+- `reader_comments`: anon SELECT of `status='visible'` on a live published artifact; author
+  inserts/edits/deletes own; admin moderates any. `public_profiles` view: public SELECT.
 
 ## Open questions
 - **Resolved (2026-06-22):** `published` edits mutate in place **and** snapshot the prior

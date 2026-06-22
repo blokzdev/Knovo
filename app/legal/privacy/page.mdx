@@ -16,21 +16,39 @@ _Last updated: 22 June 2026_
 
 Knovo ("Knovo", "we", "us") publishes interactive, source-grounded explainers in
 structural and molecular biology, molecular pharmacology, and de novo protein and drug
-design. This policy explains what data we process and why. It covers two kinds of people:
-**public readers** (anyone browsing the site) and **administrators** (the small number of
+design. This policy explains what data we process and why. It covers three kinds of people:
+**public readers** (anyone browsing the site), **reader-account holders** (readers who choose
+to sign in to save, comment, or subscribe), and **administrators** (the small number of
 trusted accounts that review and publish content).
 
 ## Public readers
 
-The public site is **read-only**. You do not need an account, and we do not ask you to sign
-in, to read published explainers.
+Reading published explainers is **open and account-free**. You do not need to sign in to
+browse or read.
 
-- **No accounts.** We do not create reader accounts, profiles, or bookmarks.
 - **No advertising or tracking cookies.** We do not set marketing or cross-site tracking
   cookies for readers.
 - **Operational data.** Our hosting provider (Vercel) processes standard request metadata
   (such as IP address and user agent) to serve pages and protect the service. This is
   ordinary server logging, not profiling.
+
+## Reader accounts
+
+Saving an explainer, posting a comment, or subscribing to new explainers requires a reader
+account. Reader accounts are **optional** and are created by signing in with Google (via
+[Supabase](https://supabase.com) Authentication). For account holders we process:
+
+- **Identity from Google OAuth:** your email address, name, and profile picture, used to
+  create your account and to show your name and avatar next to comments you post.
+- **A profile record** stored in our Supabase database (email, display name, avatar URL).
+- **Your activity:** the explainers you bookmark, the comments you post, and your subscription
+  preference. **Comments are public** — your display name and avatar are shown alongside them
+  to anyone viewing that explainer. Bookmarks and your subscription are private to you.
+- **Session cookies** that keep you signed in.
+
+We may hide or remove comments that violate our [Terms](/legal/terms). We do not sell reader
+data or use it for advertising. You can delete your own comments at any time; to delete your
+account or other data, contact us below.
 
 ## Administrators
 
@@ -57,7 +75,7 @@ We rely on a small set of providers to operate Knovo:
 
 - **Supabase** — database and authentication.
 - **Vercel** — application hosting and delivery.
-- **Google** — OAuth sign-in for administrators.
+- **Google** — OAuth sign-in for readers and administrators.
 
 Each processes data only to provide its service to us.
 
@@ -69,8 +87,10 @@ secure, but we design Knovo around least-privilege access.
 
 ## Data retention
 
-We keep administrator profile records for as long as the account is active. Operational logs
-are retained by our providers for limited periods under their own policies.
+We keep reader- and administrator-account profile records, and reader contributions
+(bookmarks, comments, subscriptions), for as long as the account is active or until you delete
+them. Operational logs are retained by our providers for limited periods under their own
+policies.
 
 ## Your rights
 
