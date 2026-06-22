@@ -18,6 +18,11 @@ mirrors into the Open questions section here.
 | **Monetization / payments** | No payments at MVP (Decision 7); requires Vercel Pro (Hobby is non-commercial). | Audience validated and a paid/ad model is chosen. |
 | **SEO / OG / PWA polish** | Phase 0 branding was scoped to "unblock Google OAuth verification" (logo, favicon/app icons, MDX legal pages) only. OpenGraph/Twitter cards, sitemap, robots, web manifest, installable PWA deferred. | Phase 3 (site experience) or first public launch — see roadmap Phase 3. |
 | **Rich marketing/legal/app pages** | Phase 0 `/legal/*` pages are intentionally minimal; landing/about/browse design deferred. | Phase 3 — content engine proven, ready to invest in public presence. |
+| **Admin dashboard HUD** | Governed-autonomy pivot (2026-06-22) built the API + worker specs first ("foundation first"). The control HUD (queue, preview, comments, directives, publish/reject, run-now/fire buttons) is the next milestone. | Phase 1b — immediately after foundation lands. |
+| **Single responsive renderer** | Needed for the HUD preview + public read site; deferred with the HUD. | Phase 1b. |
+| **Fully-autonomous publish worker** | Current model requires an admin directive to publish. A worker that publishes without per-item direction is possible but deliberately not built. | Admin trusts the pipeline enough to drop the per-item publish gate. |
+| **File attachments to worker directives** | The routine API trigger payload is text-only (no files). Admin file hand-off would go via storage + a referenced URL. | Admin needs to attach a file/image to a directive. |
+| **Public series pages** | `series` table + membership exist; public series routes not built. | Public read site (Phase 1c). |
 
 ---
 
@@ -25,11 +30,12 @@ mirrors into the Open questions section here.
 
 ### From the routine UI / connectors
 - **No PDB connector exists** in the routine's connector list, yet PDB is a locked source.
-  Plan: the routine reaches PDB via the public RCSB/PDB REST API (web fetch). *Trigger:*
+  Plan: workers reach PDB via the public RCSB/PDB REST API (allowlisted host). *Trigger:*
   PDB fetching proves unreliable or a first-class connector becomes available.
-- **Connectors run writes without per-action prompts.** Attach only what the routine needs
-  (bioRxiv, ChEMBL, PubMed, tldraw, Supabase); remove the rest. *Trigger:* the routine needs
-  a new data source — re-evaluate the attached set and re-confirm RLS bounds the writer.
+- **Connectors run writes without per-action prompts.** *(Updated 2026-06-22.)* Workers no
+  longer use the Supabase connector at all — they write via the governed Knovo API. Attach only
+  research connectors per worker (Scout: bioRxiv/ChEMBL/PubMed; Editor: + tldraw); remove the
+  rest, incl. **Supabase**. *Trigger:* a worker needs a new data source — re-evaluate the set.
 
 ### vision.md
 - Primary-source set fixed at PDB/ChEMBL/PubMed/bioRxiv. *Trigger:* repeated high-value
@@ -48,8 +54,8 @@ mirrors into the Open questions section here.
   paint.
 
 ### data-model.md
-- `published` edits: new version row vs. mutate in place. *Trigger:* first correction to a
-  live artifact.
+- **Resolved (2026-06-22):** `published` edits mutate in place **and** snapshot the prior
+  version to `revisions` (recoverable) — not a new artifact row.
 - Do rejected *supporting* sources block re-draft, or only *primary*? (Current: only
   primary.) *Trigger:* a re-draft slips through on a supporting match.
 
@@ -73,11 +79,14 @@ mirrors into the Open questions section here.
   *Trigger:* implementing the molecular3d renderer in Phase 1.
 
 ### security-and-privacy.md
-- Exact mechanism for the routine's least-privilege Supabase credential (DB role vs.
-  restricted API key vs. scoped service account). *Trigger:* wiring the routine's Supabase
-  auth in Phase 0 Part B.
-- Admin audit log beyond `reviewed_by`/`reviewed_at`. *Trigger:* first need to answer "who
-  changed this and when".
+- **Resolved (2026-06-22):** least-privilege is the **governed Knovo API with per-worker
+  verb-scoped tokens** (service-role server-only inside the API); the `knovo_routine` DB role
+  was dropped in 0004.
+- `audit_log` now records every API mutation. Open: whether admin **dashboard** actions need
+  richer audit beyond `reviewed_by`/`reviewed_at`. *Trigger:* need to answer "which admin
+  changed this and when" in detail.
+- Worker-token rotation/hardening (hash-at-rest vs. env compare). *Trigger:* more workers or a
+  token-exposure scare.
 
 ### Site / branding (Phase 0 deploy)
 - **Legal copy is unreviewed starter text.** `app/legal/privacy` and `app/legal/terms` were

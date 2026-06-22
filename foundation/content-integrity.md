@@ -15,21 +15,25 @@ No source → no draft. At least one `primary` source is required. This is why a
 allowed to author here: nothing is invented free-hand; every artifact is a structured view
 over verifiable primary data.
 
-## 2. The publish gate (human-in-the-loop)
-Routines write **drafts only**. The admin is the sole path to `published`:
-- The admin opens a draft, sees it rendered, and sees each source with its identifier and
-  citation.
-- The admin **promotes** (→ published) or **rejects** (→ rejected, with a reason).
-- **Nothing auto-publishes.** **Rejected findings are not re-drafted.**
+## 2. The publish gate (human-directed)
+*(Amended 2026-06-22.)* Workers may author, iterate, and even publish content — but the
+**public-publish action is admin-directed**, and the gate is enforced in the **Knovo API**,
+not just the UI:
+- Workers create and refine artifacts through the workflow (draft → needs_review → …).
+- The admin reviews in the dashboard HUD and expresses intent via **status markers and
+  comments/directives** (e.g. `iterate_and_publish`, `approved`, `enhance`, `archive`).
+- The API only lets a worker set `published` when the artifact is admin-`approved` **or**
+  carries an open `iterate_and_publish` directive; editing/archiving already-published content
+  likewise requires an admin directive. **Nothing reaches the public without admin intent.**
+- **Rejected findings are not re-drafted.** Deletes are **soft** (recoverable); destructive
+  and infra actions are never granted to a worker (`security-and-privacy.md`).
 
-The gate is enforced in the database, not just the UI: the routine credential has no
-update/publish/delete privilege (`security-and-privacy.md`).
-
-## 3. Validation before the queue
-Every routine output is validated with **zod against the versioned artifact schema before
-storage**. Malformed or schema-escaping output is a routine-side stop, never a draft. The
-admin's review queue therefore contains only renderable, conformant candidates
-(`agent-architecture.md`).
+## 3. Validation before any write
+Every worker write is validated with **zod against the versioned artifact schema inside the
+Knovo API, before storage**. Malformed or schema-escaping output is rejected at the boundary
+(HTTP 422), never persisted. The review queue therefore contains only renderable, conformant
+candidates (`agent-architecture.md`). Because validation lives in the API (JS), it cannot be
+bypassed by the prompt or a misbehaving worker.
 
 ## 4. Deduplication
 A draft is suppressed if its **primary source** was already seen (`seen_source_keys`) or
@@ -44,10 +48,13 @@ so it is always present and always accurate.
 
 ## Trust chain (end to end)
 ```
-primary source (stable id) ─► stored provenance + citation ─► zod-valid draft
-   ─► admin verifies source ─► promote ─► published with auto provenance footer
-                                   └─ reject ─► terminal, never re-drafted
+primary source (stable id) ─► API-stored provenance + citation ─► zod-valid draft (API)
+   ─► admin reviews + directs (approve / iterate_and_publish) ─► worker publishes via API
+       ─► published with auto provenance footer + audit-log entry
+   └─ admin rejects ─► terminal, never re-drafted
 ```
+Every transition is recorded in `audit_log` (who/what), and prior doc versions are kept in
+`revisions`, so the chain is both governed and recoverable.
 
 ## Open questions
 - Minimum citation completeness to accept a draft (e.g. require DOI for preprints?).
