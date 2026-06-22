@@ -1,6 +1,8 @@
 // Generated from the Supabase schema (supabase/migrations). Regenerate after schema changes:
 //   npx supabase gen types typescript --project-id <ref> > lib/database.types.ts
 // (or via the Supabase MCP generate_typescript_types tool). Keep in sync with the migrations.
+// NOTE: the 0004 editorial-workflow tables/columns below were authored by hand alongside the
+// migration; regenerate from the live DB once 0004 is applied.
 
 export type Json =
   | string
@@ -56,13 +58,17 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           doc: Json
           id: string
+          last_worker: string | null
           published_at: string | null
           rejected_reason: string | null
           reviewed_at: string | null
           reviewed_by: string | null
           schema_version: number
+          series_id: string | null
+          series_order: number | null
           slug: string
           status: Database["public"]["Enums"]["artifact_status"]
           summary: string | null
@@ -72,13 +78,17 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           doc: Json
           id?: string
+          last_worker?: string | null
           published_at?: string | null
           rejected_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           schema_version?: number
+          series_id?: string | null
+          series_order?: number | null
           slug: string
           status?: Database["public"]["Enums"]["artifact_status"]
           summary?: string | null
@@ -88,13 +98,17 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           doc?: Json
           id?: string
+          last_worker?: string | null
           published_at?: string | null
           rejected_reason?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
           schema_version?: number
+          series_id?: string | null
+          series_order?: number | null
           slug?: string
           status?: Database["public"]["Enums"]["artifact_status"]
           summary?: string | null
@@ -107,6 +121,98 @@ export type Database = {
             columns: ["reviewed_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "artifacts_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "series"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor: string
+          artifact_id: string | null
+          created_at: string
+          detail: Json | null
+          id: string
+        }
+        Insert: {
+          action: string
+          actor: string
+          artifact_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          id?: string
+        }
+        Update: {
+          action?: string
+          actor?: string
+          artifact_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comments: {
+        Row: {
+          action: Database["public"]["Enums"]["directive_action"] | null
+          addressed_at: string | null
+          addressed_by: string | null
+          artifact_id: string
+          author: string | null
+          created_at: string
+          id: string
+          note: string | null
+          options: Json | null
+          publish_after: boolean
+          status: Database["public"]["Enums"]["comment_status"]
+        }
+        Insert: {
+          action?: Database["public"]["Enums"]["directive_action"] | null
+          addressed_at?: string | null
+          addressed_by?: string | null
+          artifact_id: string
+          author?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          options?: Json | null
+          publish_after?: boolean
+          status?: Database["public"]["Enums"]["comment_status"]
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["directive_action"] | null
+          addressed_at?: string | null
+          addressed_by?: string | null
+          artifact_id?: string
+          author?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          options?: Json | null
+          publish_after?: boolean
+          status?: Database["public"]["Enums"]["comment_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
             referencedColumns: ["id"]
           },
         ]
@@ -132,6 +238,74 @@ export type Database = {
           email?: string | null
           id?: string
           role?: Database["public"]["Enums"]["user_role"]
+        }
+        Relationships: []
+      }
+      revisions: {
+        Row: {
+          artifact_id: string
+          created_at: string
+          created_by: string | null
+          doc: Json
+          id: string
+          note: string | null
+          schema_version: number
+          summary: string | null
+          title: string | null
+        }
+        Insert: {
+          artifact_id: string
+          created_at?: string
+          created_by?: string | null
+          doc: Json
+          id?: string
+          note?: string | null
+          schema_version: number
+          summary?: string | null
+          title?: string | null
+        }
+        Update: {
+          artifact_id?: string
+          created_at?: string
+          created_by?: string | null
+          doc?: Json
+          id?: string
+          note?: string | null
+          schema_version?: number
+          summary?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revisions_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      series: {
+        Row: {
+          created_at: string
+          id: string
+          slug: string
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          slug: string
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          slug?: string
+          summary?: string | null
+          title?: string
         }
         Relationships: []
       }
@@ -186,7 +360,16 @@ export type Database = {
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
     }
     Enums: {
-      artifact_status: "draft" | "published" | "rejected"
+      artifact_status:
+        | "draft"
+        | "published"
+        | "rejected"
+        | "needs_review"
+        | "changes_requested"
+        | "approved"
+        | "archived"
+      comment_status: "open" | "addressed" | "dismissed"
+      directive_action: "revise" | "make_series" | "archive"
       source_db: "pdb" | "chembl" | "pubmed" | "biorxiv"
       source_role: "primary" | "supporting"
       user_role: "admin" | "viewer"

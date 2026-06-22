@@ -1,8 +1,9 @@
 # SETUP — Knovo (Phase 0)
 
-How to run Knovo locally and finish the Phase 0 wiring. Supabase **dev** and **prod**
-projects already exist (created via MCP) with the schema + RLS applied. What remains is
-local env, Google OAuth, the admin grant, and (later) the routine credential.
+How to run Knovo locally and finish the wiring. Supabase **dev** and **prod** projects already
+exist (created via MCP) with the schema + RLS applied (migrations `0001`–`0004`). What remains
+is local env, Google OAuth, the admin grant, the governed worker API on `api.knovo.ai`, and the
+two routine workers (§6–§7).
 
 ## Supabase projects (already provisioned)
 Org **Blokz Team**. Schema applied via `supabase/migrations/0001–0003`.
@@ -80,13 +81,38 @@ Note: Vercel **Hobby** is non-commercial; moving to ads/paid requires **Pro**.
 - The Google **Branding** privacy/terms links use the apex (`https://knovo.ai/legal/...`);
   those 301 to `www`, which is fine for verification.
 
-## 6. The autonomous routine credential (remaining wiring — tracked in BACKLOG.md)
-The migration defines a least-privilege `knovo_routine` Postgres role (INSERT-only on
-drafts/sources/links; no update/delete/publish). Connecting the Claude routine's Supabase
-access to this role — instead of the service-role key — is the open wiring step. Until then,
-the publish-gate guarantee is enforced by the RLS policies; do **not** give the routine the
-service-role key. The routine instructions live in `docs/routines.md`.
+## 6. The governed worker API (`api.knovo.ai`)
+*(Governed-autonomy pivot, 2026-06-22.)* Workers write **only** through the Knovo API; the old
+`knovo_routine` DB role was dropped in migration `0004`.
+
+1. **Vercel domain.** `api.knovo.ai` is CNAME'd to Vercel — add it as a domain on the Knovo
+   Vercel project (same app). `middleware.ts` host-routes `api.knovo.ai/<path>` →
+   `/api/worker/<path>`.
+2. **Worker tokens.** Generate two long random secrets (`openssl rand -hex 32`):
+   - `KNOVO_WORKER_TOKEN_SCOUT`, `KNOVO_WORKER_TOKEN_EDITOR`.
+   Set them in the **Vercel env** (so the API can verify) — server-only, never `NEXT_PUBLIC_`.
+3. **Routine fire (dashboard "run now").** After creating each routine (step 7), add an **API
+   trigger** and copy its URL + `sk-ant-oat01-…` token into Vercel env as
+   `ROUTINE_SCOUT_FIRE_URL`/`ROUTINE_SCOUT_TOKEN` and `ROUTINE_EDITOR_FIRE_URL`/
+   `ROUTINE_EDITOR_TOKEN`. `KNOVO_API_BASE = https://api.knovo.ai`.
+
+The API uses `SUPABASE_SERVICE_ROLE_KEY` server-side and enforces zod validation, the
+admin-directed publish gate, audit logging, and soft-delete. Never give a worker the
+service-role key or the Supabase connector.
+
+## 7. Create the two routines (Claude web app)
+In claude.ai/code/routines, create **Scout** and **Editor** per `docs/routines.md` (names,
+triggers, connectors, paste-ready instructions). For each routine's **cloud environment**:
+- **Network access → Custom:** allow `api.knovo.ai`, `data.rcsb.org`, `files.rcsb.org`.
+- **Environment variables:** `KNOVO_API_BASE=https://api.knovo.ai` and the matching
+  `KNOVO_WORKER_TOKEN_SCOUT`/`_EDITOR` (same value as Vercel).
+- **Connectors:** Scout = bioRxiv/ChEMBL/PubMed; Editor = + tldraw; remove all others
+  (especially Supabase).
+Add Scout's **Schedule** (daily) and an **API** trigger; Editor gets an **API** trigger (+
+optional hourly schedule). Whenever schema/connectors/flow change, regenerate `docs/routines.md`
+and re-paste.
 
 ## Migrations
-SQL lives in `supabase/migrations/`. Apply new migrations to **dev first, then prod**, and
-keep both projects in sync. Regenerate `lib/database.types.ts` after schema changes.
+SQL lives in `supabase/migrations/` (`0001`–`0004`). Apply new migrations to **dev first, then
+prod**, and keep both projects in sync (Supabase MCP `apply_migration`, or `supabase db push`).
+Regenerate `lib/database.types.ts` after schema changes.

@@ -3,6 +3,11 @@
 The schema is designed now to accommodate later public accounts/bookmarks/comments
 (`profiles` + `role` already present) without building those features at MVP.
 
+*(Amended 2026-06-22 — migration `0004_editorial_workflow` added the governed editorial
+workflow: an expanded status lifecycle, admin `comments`/directives, `revisions` history,
+`series`, an `audit_log`, and soft-delete. Public social comments are still NOT built; the new
+`comments` are admin-only control signals.)*
+
 ## Tables
 
 ### profiles
@@ -38,14 +43,18 @@ Every grounded source is stored once here.
 | slug | text UNIQUE | clean public URL: `/a/<slug>` |
 | title | text | |
 | summary | text | short abstract for cards + JSON-LD |
-| status | enum `artifact_status` | `draft` \| `published` \| `rejected`; default `draft` |
+| status | enum `artifact_status` | `draft` \| `needs_review` \| `changes_requested` \| `approved` \| `published` \| `rejected` \| `archived`; default `draft` |
 | schema_version | int | artifact-schema version the `doc` conforms to |
-| doc | jsonb | the slot document (zod-validated before insert) |
-| created_by | uuid | routine/admin actor (nullable for routine cred) |
+| doc | jsonb | the slot document (zod-validated in the Knovo API before write) |
+| created_by | uuid | admin actor (nullable; worker writes set `last_worker` instead) |
 | reviewed_by | uuid | admin who actioned it (FK profiles) |
 | reviewed_at | timestamptz | |
-| published_at | timestamptz | set on promote |
+| published_at | timestamptz | set on publish |
 | rejected_reason | text | set on reject |
+| **deleted_at** | timestamptz | **soft-delete**; public reads exclude non-null |
+| **series_id** | uuid | FK → `series` (nullable) |
+| **series_order** | int | position within the series |
+| **last_worker** | text | last worker actor (e.g. `worker:editor`) |
 | created_at / updated_at | timestamptz | |
 
 ### artifact_sources — provenance/citation links
@@ -58,19 +67,57 @@ Join feeding the auto-rendered provenance footer.
 | citation_text | text | human-readable citation the admin verifies |
 | | | PK(artifact_id, source_id) |
 
-## Status lifecycle
+### series — collections
+| column | type | notes |
+|---|---|---|
+| id | uuid PK | |
+| slug | text UNIQUE | clean URL for the series |
+| title / summary | text | |
+| created_at | timestamptz | |
+Artifacts join via `artifacts.series_id` (+ `series_order`).
+
+### comments — admin editorial directives (NOT public comments)
+A directive has **two axes** — an optional `action` (what to do) and a `publish_after` flag
+(whether to publish when done) — plus a free-text `note` and optional advanced `options`. An
+*actionable* directive has an action OR is flagged publish_after; plain notes (neither) are a
+human record and do not enter the worker queue.
+| column | type | notes |
+|---|---|---|
+| id | uuid PK | |
+| artifact_id | uuid | FK → artifacts |
+| author | uuid | admin (FK auth.users); null for system |
+| note | text | natural-language instruction the worker obeys |
+| action | enum `directive_action` | `revise` \| `make_series` \| `archive` (nullable = plain note / publish-as-is) |
+| publish_after | bool | "...and publish when done" (the headline toggle); default `false` |
+| options | jsonb | optional advanced params (future: target series, tone/length, …) |
+| status | enum `comment_status` | `open` \| `addressed` \| `dismissed` |
+| created_at / addressed_at | timestamptz | |
+| addressed_by | text | worker that handled it |
+
+Examples: *iterate & publish* = `revise` + `publish_after:true`; *iterate & return for review* =
+`revise` + `publish_after:false`; *publish as-is* = `action:null` + `publish_after:true`.
+
+### revisions — version history (recoverability)
+`(id, artifact_id FK, schema_version, doc jsonb, title, summary, note, created_by, created_at)`.
+The Knovo API snapshots the prior `doc` here before every content write.
+
+### audit_log — who/what changed
+`(id, actor text, action text, artifact_id FK nullable, detail jsonb, created_at)`. Written by
+the API on every mutation (`actor` = `worker:scout|editor` or `admin:<uid>`).
+
+## Status lifecycle *(amended 2026-06-22)*
 ```
-            ┌─────────┐  admin promote   ┌────────────┐
-            │  draft  │ ───────────────► │ published  │
-  routine → │ (only)  │                  └────────────┘
-  inserts   │         │  admin reject    ┌────────────┐
-            └─────────┘ ───────────────► │ rejected   │ (terminal)
-                                         └────────────┘
+  draft ─► needs_review ⇄ changes_requested ─► approved ─► published
+    │            │                                            │
+    └─────────── any ───────────────────────────────────► archived (soft-hide)
+  rejected (terminal, feeds dedup)        deleted_at (soft-delete, recoverable)
 ```
-- Routine writes `draft` only.
-- Admin moves `draft → published` or `draft → rejected`.
-- `rejected` is terminal; findings are never re-drafted (see dedup).
-- `published` may later be unpublished/edited by admin (admin-only; not a routine path).
+- Workers may target only `needs_review` / `published` / `archived` via the API; the admin
+  owns `approved` / `changes_requested` / `rejected` (dashboard).
+- `published` requires admin **approval or an open `publish_after` directive**; editing a
+  published artifact requires an open `revise` directive, archiving it an `archive` directive.
+- `rejected` is terminal; never re-drafted (see dedup). Nothing is hard-deleted by a worker —
+  `deleted_at` is a recoverable soft-delete; public reads exclude it.
 
 ## Dedup (seen + rejected)
 Two helper views support the routine's pre-draft check:
@@ -83,14 +130,16 @@ The routine queries both before authoring. This makes "deduplicated against alre
 and rejected sources" (Decision 3) a property of the data, not of the routine's memory.
 
 ## RLS summary (full policies in security-and-privacy.md)
-- `profiles`: read own; admin reads all; only admin updates `role`.
-- `artifacts`: anon SELECT where `status='published'`; admin full; **routine INSERT only,
-  status forced `draft`**.
-- `sources` / `artifact_sources`: routine INSERT; public reads rows tied to published
-  artifacts.
+RLS bounds browser/admin access; **workers go through the Knovo API (service-role), so worker
+governance is enforced in the API, not RLS.**
+- `profiles`: read own; only admin updates `role`.
+- `artifacts`: anon SELECT where `status='published' AND deleted_at IS NULL`; admin full.
+- `sources` / `artifact_sources`: public reads rows tied to a live published artifact.
+- `series`: public SELECT; admin writes.
+- `comments` / `revisions` / `audit_log`: admin-only (no anon); written by the API.
 
 ## Open questions
-- Should `published` edits create a new artifact version row vs. mutate in place? Trigger:
-  first time an admin needs to correct a live artifact.
+- **Resolved (2026-06-22):** `published` edits mutate in place **and** snapshot the prior
+  version to `revisions` (recoverable), rather than forking a new artifact row.
 - Do supporting (non-primary) rejected sources also block re-draft, or only primary?
   Current rule: only primary blocks. Trigger: a re-draft slips through on a supporting match.

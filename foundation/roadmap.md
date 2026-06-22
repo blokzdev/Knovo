@@ -19,17 +19,24 @@ admin login; basic CI; env vars + committed `.env.example`.
 
 > Phase 1 does not begin until this gate is verified and approved.
 
-## Phase 1 — Generate, review, read
-- **Artifact-generation pipeline:** the v1 routine producing schema-valid, source-grounded
-  drafts into Supabase (per `docs/routines.md`).
-- **The single responsive renderer:** three.js / tldraw / charts across portrait/landscape/
-  immersive, with the auto provenance footer.
-- **Admin review surface:** draft queue, rendered preview, source verification, promote/
-  reject.
-- **Public read site:** SSR published artifacts at clean URLs with JSON-LD.
+## Phase 1 — Governed editorial team, review, read
+*(Reshaped 2026-06-22 around the governed-autonomy pivot.)*
 
-**Phase 1 gate (sketch):** routine drafts a real finding; admin reviews and publishes it;
-the published artifact renders responsively at a clean URL and is indexable.
+**1a — Governed pipeline foundation (this milestone):** the governed Knovo API
+(`api.knovo.ai`) as the sole worker write path; schema `0004` (lifecycle, comments/directives,
+revisions, series, audit, soft-delete); the **Scout + Editor** worker specs (`docs/routines.md`).
+
+**1b — Admin dashboard HUD + renderer (next):**
+- The **control HUD:** queue across statuses, rendered preview, source verification, leave
+  comments + set directives/status, publish/reject, **run-now / fire-worker** buttons.
+- **The single responsive renderer:** three.js / tldraw / charts across portrait/landscape/
+  immersive, with the auto provenance footer (also powers the HUD preview).
+
+**1c — Public read site:** SSR live-published artifacts at clean URLs with JSON-LD; series pages.
+
+**Phase 1 gate (sketch):** a worker drafts a real finding via the API; the admin reviews,
+comments/directs in the HUD, and the Editor iterates and publishes on direction; the published
+artifact renders responsively at a clean URL and is indexable.
 
 ## Phase 2 — Validate & harden (sketch)
 - Cadence/volume tuning; discovery ranking.

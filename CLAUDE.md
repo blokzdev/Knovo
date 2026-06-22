@@ -2,7 +2,10 @@
 
 Knovo is an AI-authored library of interactive, source-grounded explainers in
 structural/molecular biology, molecular pharmacology, and de novo protein/drug design.
-Claude autonomously drafts artifacts on a schedule; a human admin reviews and publishes.
+Claude **routine workers** author and iterate artifacts; the **admin dashboard is a control
+HUD** where a human directs the work (status markers + natural-language comments) and the
+public-publish action is admin-directed. See the 2026-06-22 governed-autonomy amendment in
+`DECISIONS.md`.
 
 This file is the memory harness for every session. Read it first, every time.
 
@@ -18,18 +21,22 @@ This file is the memory harness for every session. Read it first, every time.
    `glossary.md`, and `docs/routines.md`.
 
 ## Standing invariants (never violate; if tempted, log to BACKLOG.md and ask)
-1. **Publish gate.** Routines write **drafts only**. Only the admin promotes a draft to
-   published or rejects it. Nothing auto-publishes. Rejected findings are not re-drafted.
+1. **Governed publish gate.** Workers act **only through the governed Knovo API**, which is
+   the single write boundary. Workers may create/iterate/publish/archive content, but
+   **publishing (and editing/archiving live content) requires an admin directive** set in the
+   dashboard; nothing reaches the public except via that gate; deletes are soft (recoverable);
+   rejected findings are not re-drafted. (Amended 2026-06-22.)
 2. **Source-grounding.** Every artifact has ≥1 primary source (PDB/ChEMBL/PubMed/bioRxiv)
    with a stable identifier and a verifiable citation, stored as provenance. No source → no
    draft.
-3. **Slot schema / no-escape.** The routine fills slots only; it never emits layout code and
-   never escapes the versioned vocabulary. Every output is zod-validated against the schema
-   **before** storage. One renderer owns all layout. Old artifacts must keep rendering after
-   a version bump.
-4. **Least privilege.** The routine is insert-only on drafts (enforced by Supabase RLS + a
-   dedicated low-privilege credential, NOT the connector or prompt). Service-role key is
-   server-only, never client-side, never used by the routine. Zero secrets in the repo.
+3. **Slot schema / no-escape.** Workers fill slots only; never emit layout code, never escape
+   the versioned vocabulary. Every write is zod-validated against the schema **before** storage
+   (enforced in the Knovo API). One renderer owns all layout. Old artifacts must keep rendering
+   after a version bump.
+4. **Least privilege.** Workers authenticate to the Knovo API with **per-worker, verb-scoped
+   bearer tokens** (enforced by the API, NOT the connector or prompt). The service-role key is
+   server-only, used solely inside the API — never client-side, never by a worker, never via
+   the management connector. No worker holds DDL/infra power. Zero secrets in the repo.
 5. **Narrow niche.** Structural/molecular biology, molecular pharmacology, de novo design.
    Not broad biomedical, not patient-facing/consumer health.
 6. **Scope wall.** When tempted to expand scope mid-phase, **log it to BACKLOG.md and do not
