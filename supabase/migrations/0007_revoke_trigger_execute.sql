@@ -1,0 +1,14 @@
+-- 0007_revoke_trigger_execute.sql — clear security advisors 0028/0029.
+--
+-- public.stamp_reader_comment_author() is SECURITY DEFINER by design (0006): it stamps the
+-- comment author's public display from their own profile at insert time, which is spoof-proof
+-- precisely because it runs as the definer. It is invoked ONLY by the BEFORE INSERT trigger on
+-- reader_comments — never as an RPC. But because it lives in the exposed `public` schema, the
+-- API roles can still call it via /rest/v1/rpc/stamp_reader_comment_author, which the linter
+-- flags (0028 anon, 0029 authenticated).
+--
+-- Revoking EXECUTE from the API roles removes that RPC exposure. The trigger keeps working:
+-- trigger functions run with the privileges of the table owner when the trigger fires, which is
+-- independent of EXECUTE grants on the function. (PUBLIC is included to drop the implicit
+-- default grant that new functions receive.)
+revoke execute on function public.stamp_reader_comment_author() from public, anon, authenticated;
