@@ -1,0 +1,16 @@
+# Secrets — never commit (see foundation/security-and-privacy.md)
+.env
+.env.*
+!.env.example
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+build/
+next-env.d.ts
+*.tsbuildinfo
+*.log
+.DS_Store
+.vercel
