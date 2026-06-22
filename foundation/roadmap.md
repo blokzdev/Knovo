@@ -45,9 +45,16 @@ grammar** (now triggered).
 sitemap + robots, and a shared public shell (`app/(site)/` header/footer). Public reads exclude
 non-published/soft-deleted.
 
-**1d — Reader accounts & engagement (next):** Google sign-in for readers; bookmarks; reader
-comments (distinct from editorial directives) with admin moderation; subscribe (record + RSS now,
-email later). Amends Decision #5.
+**1d — Reader accounts & engagement (DONE 2026-06-22):** Google sign-in for readers; bookmarks;
+reader comments (distinct from editorial directives) with admin moderation; subscribe (record +
+RSS now, email later). Amended Decision #5. Schema `0005`; `0006` hardened it (author display
+denormalized onto the comment row → no SECURITY DEFINER view; RLS `(select auth.uid())`; FK
+indexes — clean Supabase security advisors).
+
+**Phase 1 status:** code-complete (author → review → publish → public read → reader engagement).
+Remaining to *run* the loop end-to-end is operational: worker tokens + routine fire URLs in
+Vercel/Claude, and a first worker-authored, admin-published artifact. Next dev work is
+**1b-follow** (renderer hardening).
 
 **Phase 1 gate (sketch):** a worker drafts a real finding via the API; the admin reviews,
 comments/directs in the HUD, and the Editor iterates and publishes on direction; the published

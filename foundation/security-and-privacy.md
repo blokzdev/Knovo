@@ -59,16 +59,17 @@ and bypasses RLS — governance is enforced in the API instead).
 | comments / revisions / audit_log | — | read (admin) / write comments | API-only |
 | bookmarks / subscriptions | — | owner CRUD (`user_id = auth.uid()`) | — |
 | reader_comments | SELECT `status='visible'` on a live published artifact | author CRUD own; **admin moderates any** | — |
-| public_profiles (view) | SELECT (id, display_name, avatar_url only) | SELECT | — |
 
 - RLS is **enabled on every table**; default-deny, policies grant the minimum above.
 - `admin` privilege is checked via `profiles.role` of the authenticated user (`is_admin()`).
 - Anon's visibility of `sources`/`artifact_sources` is constrained to rows joined to a **live
   published** artifact, so draft/rejected/soft-deleted provenance never leaks.
-- Reader comment authors render via the `public_profiles` **SECURITY DEFINER** view, which
-  exposes only `(id, display_name, avatar_url)` — `profiles` email/role never reach anon. Reader
-  profiles are read-only from the Google identity (no self-update policy), so a reader cannot
-  escalate their own `role`.
+- Reader comment authors render from `reader_comments.author_name`/`author_avatar`, **stamped at
+  insert by a SECURITY DEFINER trigger** from the author's profile — public, immutable, and
+  spoof-proof (sourced from `auth.uid()`'s row, not client input). No `profiles` columns reach
+  anon, and there is no SECURITY DEFINER view (the `0005` `public_profiles` view was removed in
+  `0006`). Reader profiles are read-only from the Google identity (no self-update policy), so a
+  reader cannot escalate their own `role`.
 - The old per-row `knovo_routine` DB role was dropped in migration 0004 (superseded by the API).
 
 ## Privacy
