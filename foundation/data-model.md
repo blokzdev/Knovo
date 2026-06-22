@@ -87,7 +87,7 @@ human record and do not enter the worker queue.
 | artifact_id | uuid | FK → artifacts |
 | author | uuid | admin (FK auth.users); null for system |
 | note | text | natural-language instruction the worker obeys |
-| action | enum `directive_action` | `revise` \| `make_series` \| `archive` (nullable = plain note / publish-as-is) |
+| action | enum `directive_action` | content: `revise` \| `expand` \| `condense` \| `reverify` \| `split`; curation: `make_series` \| `add_to_series`; lifecycle: `archive` (nullable = plain note / publish-as-is) |
 | publish_after | bool | "...and publish when done" (the headline toggle); default `false` |
 | options | jsonb | optional advanced params (future: target series, tone/length, …) |
 | status | enum `comment_status` | `open` \| `addressed` \| `dismissed` |

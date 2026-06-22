@@ -24,7 +24,8 @@ admin login; basic CI; env vars + committed `.env.example`.
 
 **1a — Governed pipeline foundation (this milestone):** the governed Knovo API
 (`api.knovo.ai`) as the sole worker write path; schema `0004` (lifecycle, comments/directives,
-revisions, series, audit, soft-delete); the **Scout + Editor** worker specs (`docs/routines.md`).
+revisions, series, audit, soft-delete); the **Scout + Editor + Keeper** worker specs
+(`docs/routines.md`).
 
 **1b — Admin dashboard HUD + renderer (next):**
 - The **control HUD:** queue across statuses, rendered preview, source verification, leave

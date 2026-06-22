@@ -108,9 +108,23 @@ export function publishAuthorized(current: Status, directives: OpenDirective[]):
   return current === "approved" || directives.some((d) => d.publish_after);
 }
 
-// Editing already-published content requires an open 'revise' directive (the admin asked for it).
+// Capability groups — keep the per-action policy in one place so new actions slot in cleanly.
+// EDIT actions change the document; SERIES actions curate collections.
+export const EDIT_ACTIONS: ReadonlySet<DirectiveAction> = new Set<DirectiveAction>([
+  "revise",
+  "expand",
+  "condense",
+  "reverify",
+  "split",
+]);
+export const SERIES_ACTIONS: ReadonlySet<DirectiveAction> = new Set<DirectiveAction>([
+  "make_series",
+  "add_to_series",
+]);
+
+// Editing already-published content requires an open content directive (the admin asked for it).
 export function editLiveAuthorized(directives: OpenDirective[]): boolean {
-  return directives.some((d) => d.action === "revise");
+  return directives.some((d) => d.action !== null && EDIT_ACTIONS.has(d.action));
 }
 export function archiveLiveAuthorized(directives: OpenDirective[]): boolean {
   return directives.some((d) => d.action === "archive");

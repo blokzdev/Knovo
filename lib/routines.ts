@@ -4,11 +4,12 @@
 // "Process the open directive on artifact <id>." Server-only: tokens never reach the browser.
 // Docs: https://platform.claude.com/docs/en/api/claude-code/routines-fire
 
-export type WorkerId = "scout" | "editor";
+export type WorkerId = "scout" | "editor" | "keeper";
 
 const CONFIG: Record<WorkerId, { urlEnv: string; tokenEnv: string }> = {
   scout: { urlEnv: "ROUTINE_SCOUT_FIRE_URL", tokenEnv: "ROUTINE_SCOUT_TOKEN" },
   editor: { urlEnv: "ROUTINE_EDITOR_FIRE_URL", tokenEnv: "ROUTINE_EDITOR_TOKEN" },
+  keeper: { urlEnv: "ROUTINE_KEEPER_FIRE_URL", tokenEnv: "ROUTINE_KEEPER_TOKEN" },
 };
 
 export type FireResult = {

@@ -9,14 +9,19 @@ directly. The admin dashboard is a **control HUD**: the human directs work with 
 and natural-language comments; workers read those directives and act. Canonical, paste-ready
 worker instructions live in `docs/routines.md`.
 
-## The workers (start with two; grow as needed)
+## The workers (three; grow as needed)
 - **Scout** — discovery/draft. Trawls the niche (bioRxiv, PubMed, ChEMBL, PDB-via-REST), grounds
   a finding in primary sources, and creates a **draft** via the API. Lowest trust (reads
   untrusted external text) → smallest verb set (`dedup`, `create`).
-- **Editor** — iterate/enhance/publish. Reads its **queue** (open actionable directives) and
-  acts: revises drafts or live articles in place, restructures into series, transitions status,
-  and **publishes when the admin has directed it** (`approved`, or a directive flagged
-  `publish_after`). Larger verb set; acts on admin-reviewed intent.
+- **Editor** — iterate/enhance/curate/publish. Reads its **queue** (open actionable directives)
+  and acts via the rich action set — `revise`/`expand`/`condense`/`reverify`/`split` (content),
+  `make_series`/`add_to_series` (curation), `archive` — and **publishes when the admin has
+  directed it** (`approved`, or a directive flagged `publish_after`). Can `flag` issues. Largest
+  verb set; acts on admin-reviewed intent.
+- **Keeper** — source integrity/maintenance. On a schedule, sweeps **published** artifacts
+  (`review-targets`), re-verifies cited primary sources for retraction/update, and **flags** drift
+  to the admin rather than editing live content. Verb scope: `targets`, `update`, `status`,
+  `flag` — it never publishes or restructures.
 
 ## Pipeline (Scout)
 ```
@@ -40,6 +45,16 @@ worker instructions live in `docs/routines.md`.
 ```
 Every content write snapshots the prior version to `revisions`; every mutation is audit-logged.
 
+## Sweep (Keeper — source integrity)
+```
+1. TARGETS   GET /worker/review-targets — live published artifacts (oldest-checked first) + sources.
+2. REVERIFY  re-check each primary source (bioRxiv/PubMed/ChEMBL/PDB) for retraction/material update.
+3. FLAG      if drift is found → POST /worker/artifacts/:id/flag (note + severity) for the admin;
+             otherwise leave it. Keeper does not edit or publish live content on its own.
+```
+Flags are admin-facing comments (no action, no publish_after) → they surface in the dashboard but
+never re-enter the worker queue. The admin then directs a `reverify`/`revise` (+ `publish_after`).
+
 ## Invariants the workers must honor
 - **Governed writes only.** All data access is via the Knovo API with the worker's bearer
   token. No Supabase connector, no service-role key, no direct DB. (`security-and-privacy.md`)
@@ -60,7 +75,8 @@ only the zod-conformant ones reach the review queue or the public site.
 ## Connectors (per worker, per the routine UI)
 - **Scout — keep:** bioRxiv, ChEMBL, PubMed (PDF Viewer optional). PDB via public RCSB REST.
 - **Editor — keep:** bioRxiv, ChEMBL, PubMed, tldraw (diagram stages).
-- **Both — remove everything else**, incl. **Supabase** (workers use the API, not the
+- **Keeper — keep:** bioRxiv, ChEMBL, PubMed (to re-check sources). PDB via RCSB REST.
+- **All — remove everything else**, incl. **Supabase** (workers use the API, not the
   connector), Three.js Viewer, Vercel, Wolfram, Booking.com, Clinical Trials, CMS Coverage,
   Excalidraw, Hugging Face, ICD-10, Malwarebytes, NPI Registry.
 - Each worker's env allowlists only `api.knovo.ai` + `data.rcsb.org`/`files.rcsb.org` and holds

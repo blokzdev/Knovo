@@ -34,8 +34,8 @@ mirrors into the Open questions section here.
   PDB fetching proves unreliable or a first-class connector becomes available.
 - **Connectors run writes without per-action prompts.** *(Updated 2026-06-22.)* Workers no
   longer use the Supabase connector at all — they write via the governed Knovo API. Attach only
-  research connectors per worker (Scout: bioRxiv/ChEMBL/PubMed; Editor: + tldraw); remove the
-  rest, incl. **Supabase**. *Trigger:* a worker needs a new data source — re-evaluate the set.
+  research connectors per worker (Scout & Keeper: bioRxiv/ChEMBL/PubMed; Editor: + tldraw);
+  remove the rest, incl. **Supabase**. *Trigger:* a worker needs a new data source.
 
 ### vision.md
 - Primary-source set fixed at PDB/ChEMBL/PubMed/bioRxiv. *Trigger:* repeated high-value
@@ -68,8 +68,10 @@ mirrors into the Open questions section here.
 ### content-integrity.md
 - Minimum citation completeness to accept a draft (e.g. require DOI for preprints).
   *Trigger:* an admin can't verify a source from what was stored.
-- Handling a cited source that is later retracted/updated after publish. *Trigger:* first
-  retraction of a cited source.
+- **Partly addressed (2026-06-22):** the **Keeper** worker re-verifies published sources and
+  flags retractions/updates to the admin. Open: sweep cadence/SLA, and whether a confirmed
+  retraction should auto-`archive` pending admin review. *Trigger:* first retraction of a cited
+  source.
 
 ### artifact-schema.md
 - Allow more than one stage per artifact? (v1: one.) *Trigger:* a finding needs two

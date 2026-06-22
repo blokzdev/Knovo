@@ -19,7 +19,16 @@ alter type public.artifact_status add value if not exists 'archived';
 -- A directive is two axes: WHAT to do (action) × whether to PUBLISH after (publish_after),
 -- plus a free-text note and optional advanced params. `revise` covers update/enhance on a
 -- draft or a live article; null action = a plain note (or, with publish_after, "publish as-is").
-create type public.directive_action as enum ('revise', 'make_series', 'archive');
+create type public.directive_action as enum (
+  'revise',         -- change content per the note (edit/update/enhance/retitle)
+  'expand',         -- substantially deepen/extend
+  'condense',       -- tighten without losing substance
+  'reverify',       -- re-check primary sources (retraction/update); refresh provenance
+  'split',          -- break one over-broad artifact into several focused drafts
+  'make_series',    -- create a series (collection) from artifacts
+  'add_to_series',  -- attach artifacts to an existing series
+  'archive'         -- remove from public, keep in workflow
+);
 create type public.comment_status as enum ('open', 'addressed', 'dismissed');
 
 -- ── series (collections) ─────────────────────────────────────────────────────
