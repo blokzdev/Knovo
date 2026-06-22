@@ -1,0 +1,92 @@
+{/*
+  STARTER COPY — drafted for Knovo's actual architecture (Supabase auth, Google
+  OAuth admin login, Vercel hosting, public read-only site). It is NOT legal
+  advice and must be reviewed by a qualified person before launch. Replace the
+  contact address and confirm the subprocessor list before relying on it.
+*/}
+
+export const metadata = {
+  title: "Privacy Policy — Knovo",
+  description: "How Knovo handles data for its admin accounts and public readers.",
+};
+
+# Privacy Policy
+
+_Last updated: 22 June 2026_
+
+Knovo ("Knovo", "we", "us") publishes interactive, source-grounded explainers in
+structural and molecular biology, molecular pharmacology, and de novo protein and drug
+design. This policy explains what data we process and why. It covers two kinds of people:
+**public readers** (anyone browsing the site) and **administrators** (the small number of
+trusted accounts that review and publish content).
+
+## Public readers
+
+The public site is **read-only**. You do not need an account, and we do not ask you to sign
+in, to read published explainers.
+
+- **No accounts.** We do not create reader accounts, profiles, or bookmarks.
+- **No advertising or tracking cookies.** We do not set marketing or cross-site tracking
+  cookies for readers.
+- **Operational data.** Our hosting provider (Vercel) processes standard request metadata
+  (such as IP address and user agent) to serve pages and protect the service. This is
+  ordinary server logging, not profiling.
+
+## Administrators
+
+Administrators sign in with Google via [Supabase](https://supabase.com) Authentication. For
+these accounts we process:
+
+- **Identity from Google OAuth:** your email address, name, and basic Google profile
+  information, used solely to authenticate you and authorize the admin role.
+- **A profile record** stored in our Supabase database (email and role), used to gate access
+  to the admin review tools.
+- **Session cookies** that keep you signed in. These exist only for signed-in administrators.
+
+We do not use administrator data for marketing and we do not sell it.
+
+## Content and sources
+
+Published explainers cite primary scientific sources from public databases — the Protein
+Data Bank (PDB), ChEMBL, PubMed, and bioRxiv. This source material is scientific data and
+does not contain your personal information.
+
+## Service providers (subprocessors)
+
+We rely on a small set of providers to operate Knovo:
+
+- **Supabase** — database and authentication.
+- **Vercel** — application hosting and delivery.
+- **Google** — OAuth sign-in for administrators.
+
+Each processes data only to provide its service to us.
+
+## Security
+
+Access to data is enforced at the database layer with row-level security, and elevated
+credentials are confined to the server and never exposed to browsers. No system is perfectly
+secure, but we design Knovo around least-privilege access.
+
+## Data retention
+
+We keep administrator profile records for as long as the account is active. Operational logs
+are retained by our providers for limited periods under their own policies.
+
+## Your rights
+
+Depending on where you live, you may have rights to access, correct, or delete personal data
+we hold about you, or to object to its processing. To make a request, contact us using the
+details below.
+
+## Children
+
+Knovo is intended for researchers and professionals and is not directed to children.
+
+## Changes
+
+We may update this policy as Knovo evolves. Material changes will be reflected by the "last
+updated" date above.
+
+## Contact
+
+Questions about this policy: **privacy@knovo.ai**.

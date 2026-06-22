@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { KnovoMark } from "@/components/Logo";
 
 export const dynamic = "force-dynamic";
 
@@ -16,8 +17,11 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <h1 className="text-2xl font-semibold">Knovo</h1>
-      <p className="mt-2 text-sm text-neutral-600">
+      <div className="flex items-center gap-3">
+        <KnovoMark className="h-9 w-9" />
+        <h1 className="text-2xl font-semibold">Knovo</h1>
+      </div>
+      <p className="mt-3 text-sm text-neutral-600">
         Interactive, source-grounded explainers in structural/molecular biology, molecular
         pharmacology, and de novo protein &amp; drug design.
       </p>
@@ -40,6 +44,17 @@ export default async function HomePage() {
           ))
         )}
       </section>
+
+      <footer className="mt-16 border-t border-neutral-200 pt-6 text-xs text-neutral-400">
+        <nav className="flex gap-4">
+          <Link href="/legal/privacy" className="hover:text-neutral-600">
+            Privacy
+          </Link>
+          <Link href="/legal/terms" className="hover:text-neutral-600">
+            Terms
+          </Link>
+        </nav>
+      </footer>
     </main>
   );
 }
