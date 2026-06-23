@@ -34,6 +34,9 @@ mirrors into the Open questions section here.
 | **Worker-harness read-write coordination + Supervisor** | Designed in `foundation/worker-harness.md` (harness repo, AGENTS.md/CLAUDE.md constitution, per-worker subfolders, scoped writes, the 4th Supervisor routine, github-event triggers). **Deferred** per scope-wall — today the repo is read-only context and there are three workers with static prompts. | Roadmap "Platform horizon" M1/M2 pulled (repo writes + Supervisor wanted). |
 | **Modular / parametric routine prompts** | `compose(domainTemplate, workerRoleModule, adminParams)` with `routine_configs.params jsonb` + settings knobs (`worker-harness.md` §7). Prompts are static today (drift-guarded `lib/workers/routines.ts` ↔ `docs/routines.md`). **Deferred.** | Roadmap "Platform horizon" M3 — operators need per-worker customization. |
 | **Multi-tenant AI Blog-as-a-Service (north star)** | Owner-directed vision (`vision.md`): domain templates + multi-tenant data model + onboarding, Knovo as showcase tenant. **Recorded, not scheduled** (scope-wall); narrow-niche Decision 1 still governs the Knovo tenant. | Roadmap "Platform horizon" M4–M6 — Knovo validated and a second domain wanted. |
+| **GemBlog rebrand + repo topology** | Owner-directed (`DECISIONS.md` 2026-06-23 GemBlog note; `deployment.md` → "Platform horizon"): rename Knovo → **GemBlog** (`gemblog.co`) at phase start; rename the current repo → `gemblog` **in place** (active line keeps history/CI/Vercel/Supabase) with a one-time **`knovo-single-tenant`** snapshot as the frozen backup. **Recorded, not executed.** | Roadmap "Platform horizon" M5 (rebrand + tenancy) pulled. |
+| **Design-kit generalization (universal core + kits)** | The schema is ~60–70% domain-neutral; molecular coupling is 3 seams (the `molecular3d` stage + PDB selection grammar, the `sourceRef.db` enum + `DB_LABEL`, niche prompts). Factor these into the **molecular kit**; new niches register stage kinds + source vocab + voice (`artifact-schema.md` → "Generalization"). **Designed, not built.** | Roadmap "Platform horizon" M4 — a second domain wanted. |
+| **Freemium monetization (GemBlog)** | Model in `monetization.md`: free `‹slug›.gemblog.co` + DB-level generation quotas (`usage_tracking` + plan limits, enforced at the API boundary); paid custom/vanity domains, higher quotas, autonomous Supervisor cadence. Payments (Stripe/Paddle) a separate PR; needs Vercel Pro. **Gated by Decision 7; recorded only.** | Roadmap "Platform horizon" M6 — audience validated and a paid model chosen. |
 
 ---
 
@@ -137,6 +140,21 @@ mirrors into the Open questions section here.
 - Custom domain + when to provision. *Trigger:* first public launch.
 - Prod Supabase PITR/backup tier beyond defaults. *Trigger:* real content the admin would
   hate to lose.
+
+### monetization.md / platform horizon *(future, scope-walled)*
+- **Free-tier limits** — daily vs monthly; per-tenant vs per-worker; exact numbers. *Trigger:*
+  starting M6 / a pricing pass.
+- **First paid feature** — which unlock leads (custom domain vs quota vs Supervisor cadence).
+  *Trigger:* first paying-intent signal.
+- **Payment provider** — Stripe vs Paddle (merchant-of-record / VAT). *Trigger:* building billing.
+- **Custom-domain flow** — DNS verification + TLS cert issuance + collision handling. *Trigger:*
+  first Pro custom domain.
+- **Domain-kit registry schema** — how a kit registers stage kinds + source vocabulary + voice
+  (`artifact-schema.md` → "Generalization"). *Trigger:* starting M4.
+- **Tenant-isolation test strategy** — proving TenantA cannot read TenantB after the RLS rewrites
+  (`data-model.md` → "Multi-tenant data model"). *Trigger:* starting M5.
+- **Repo rename timing** — at which milestone gate the Knovo → `gemblog` rename + `knovo-single-tenant`
+  snapshot actually happens. *Trigger:* pulling M5.
 
 ### build-conventions.md
 - Test strategy depth for MVP. *Trigger:* first regression a test would have caught.

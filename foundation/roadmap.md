@@ -108,12 +108,13 @@ proven. Distinct from the single artifact renderer (Phase 1) — this is the sur
 that a first-time niche visitor can navigate, with SEO/social/PWA metadata complete.
 
 ## Platform horizon (vision, not scheduled — owner-directed 2026-06-23)
-The north star in `vision.md`: evolve the engine into a **domain-agnostic, multi-tenant AI
-Blog-as-a-Service** with Knovo as the science showcase tenant. **Recorded, not scheduled** — these
-milestones are completion-driven and **not started until explicitly pulled**, and the narrow-niche
-invariant (Decision 1) keeps governing the Knovo tenant until the relevant milestone begins (the
-`DECISIONS.md` vision note flags which decisions each amends). Design lives in
-`foundation/worker-harness.md`.
+The north star in `vision.md`: evolve the engine into **GemBlog** (`gemblog.co`) — a domain-agnostic,
+multi-tenant AI Blog-as-a-Service with Knovo as the molecular-science showcase tenant. **Recorded, not
+scheduled** — these milestones are completion-driven and **not started until explicitly pulled**, and
+the narrow-niche invariant (Decision 1) keeps governing the Knovo tenant until the relevant milestone
+begins (the `DECISIONS.md` vision notes flag which decisions each amends). Design lives in
+`foundation/worker-harness.md` (harness), `foundation/artifact-schema.md` → "Generalization"
+(design kits), and `foundation/monetization.md` (freemium).
 - **M1 — Harness baseline (read-mostly).** Publish/fork the worker-harness repo; workers *read* the
   shared constitution + their subfolder; no repo writes yet.
 - **M2 — Read-write coordination + Supervisor.** Per-worker subfolder writes; the 4th **Supervisor**
@@ -122,11 +123,15 @@ invariant (Decision 1) keeps governing the Knovo tenant until the relevant miles
 - **M3 — Parametric prompt composer.** `compose(domainTemplate, workerRoleModule, adminParams)`;
   `routine_configs.params jsonb`; per-worker knobs in `/admin/settings`; the drift test shifts to
   "default params reproduce the canonical `docs/routines.md` block."
-- **M4 — Domain template registry.** Template sets beyond molecular science (sources, voice, slot
-  conventions, connectors) selectable per tenant.
-- **M5 — Multi-tenant data model + onboarding.** Tenant isolation, per-tenant tokens, self-serve
-  setup.
-- **M6 — BaaS productization.** Billing/limits/support around the above (gated by Decision 7).
+- **M4 — Domain kit registry.** The **universal core + domain kits** model (`artifact-schema.md` →
+  "Generalization"): register per-niche stage kinds + source vocabulary + voice beyond the molecular
+  kit, selectable per tenant. (Kit = render/sources/schema; paired with a harness template + env.)
+- **M5 — Multi-tenant data model + onboarding + GemBlog rebrand.** Begins with the brand rename and
+  **repo rename-in-place → `gemblog`** + `knovo-single-tenant` snapshot (`deployment.md`); then tenant
+  isolation (the `tenants` table + `tenant_id` discriminator + RLS rewrites, `data-model.md`),
+  per-tenant tokens, `‹slug›.gemblog.co` subdomain routing, and self-serve setup.
+- **M6 — BaaS productization (freemium).** Tiers, DB-level generation **quotas**, **custom/vanity
+  domains**, billing, and support around the above (`monetization.md`; gated by Decision 7).
 
 ## Later (deferred — see BACKLOG.md)
 Public accounts, bookmarks, comments; 3D poster/thumbnail generation; PDF export to Google
