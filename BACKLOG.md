@@ -21,7 +21,10 @@ mirrors into the Open questions section here.
 | **SEO / OG / PWA polish** | Phase 1c shipped sitemap, robots, RSS, JSON-LD, and OpenGraph on artifacts. Still deferred: Twitter cards, generated OG images, web manifest, installable PWA. | Phase 3 (site experience) or first public launch — see roadmap Phase 3. |
 | **Rich marketing/legal/app pages** | Phase 0 `/legal/*` pages are intentionally minimal; landing/about/browse design deferred. | Phase 3 — content engine proven, ready to invest in public presence. |
 | **Admin dashboard HUD** | ✅ Delivered (Phase 1b, 2026-06-22): queue, preview, directive composer, status controls, workers dispatch, revisions/audit. | — (done) |
-| **Renderer hardening** | `<ArtifactRenderer>` v1 ships real charts + 3D + panels/captions/provenance. **In progress (Phase 1b-follow)** — plan of record in `docs/renderer-hardening.md`. Done: PR0 (migration `0007`), PR1 (control→stage param-grammar + molecular3d highlight selection→3D, spin, chart y-log; vitest added). Remaining: PR2 tldraw `diagram` rendering, PR3 immersive responsive mode. | Being pulled now (Phase 1b-follow). |
+| **Admin routine-trigger settings (BYOK)** | ✅ Delivered (2026-06-23, `0008`): `/admin/settings` stores each routine's fire-trigger URL + token (+ `KNOVO_API_BASE`) — admin-only RLS, server-only reads, masked UI, audited; env stays a fallback. Unblocks dashboard "run now" dispatch without a redeploy. Decision 8 amended. | — (done) |
+| **Encrypt routine trigger token at rest** | `routine_configs.token` is stored plaintext (mitigated by admin-only RLS, server-only reads, masked UI). Acceptable for a single-admin HUD. | More admins, or a secret-exposure scare → add pgcrypto/pgsodium or move to a secrets manager. |
+| **Design-system & layout elevation (dedicated PR)** | Brand-aware design pass — token system + shared primitives + light/dark across surfaces — deliberately split from the BYOK settings PR so each ships independently. Outlined in the PR plan; precedes the remaining renderer PRs in the overall sequence. | Being pulled next (after admin settings). |
+| **Renderer hardening** | `<ArtifactRenderer>` v1 ships real charts + 3D + panels/captions/provenance. **In progress (Phase 1b-follow)** — plan of record in `docs/renderer-hardening.md`. Done: PR0 (migration `0007`), PR1 (control→stage param-grammar + molecular3d highlight selection→3D, spin, chart y-log; vitest added). Remaining (after the inserted admin-settings + design-system PRs): tldraw `diagram` rendering, immersive responsive mode. | Being pulled (Phase 1b-follow). |
 | **Public read site wiring** | The shared `<ArtifactRenderer>` is built but only used in the admin HUD; public `app/a/[slug]` is still a stub. | Phase 1c — wire renderer + JSON-LD + series pages. |
 | **Admin manual full-doc editing** | Admin directs the Editor worker to change content; no in-dashboard slot editor. | Admin needs to hand-edit a doc without a worker. |
 | **Fully-autonomous publish worker** | Current model requires an admin directive to publish. A worker that publishes without per-item direction is possible but deliberately not built. | Admin trusts the pipeline enough to drop the per-item publish gate. |
@@ -97,6 +100,9 @@ mirrors into the Open questions section here.
   changed this and when" in detail.
 - Worker-token rotation/hardening (hash-at-rest vs. env compare). *Trigger:* more workers or a
   token-exposure scare.
+- **Routine trigger tokens** are now also DB-stored (`routine_configs.token`, `0008`) when set via
+  `/admin/settings` — plaintext, admin-only RLS, server-only reads, masked UI, audited; env stays a
+  fallback. Encryption-at-rest is deferred (same trigger as token rotation/hardening above).
 
 ### Site / branding (Phase 0 deploy)
 - **Legal copy is unreviewed starter text.** `app/legal/privacy` and `app/legal/terms` were

@@ -10,6 +10,11 @@ Sequence: **PR0 (this) → PR1 → PR2 → PR3**, one branch/PR each, owner merg
 **proposed v1 spec**; they become normative in `foundation/artifact-schema.md` when PR1 lands —
 do not treat them as resolved until then.
 
+> **Sequence note (2026-06-23):** PR0 and PR1 are merged. Two PRs were then inserted ahead of the
+> remaining renderer work in the overall repo sequence — an **admin BYOK settings** page (done,
+> `0008`) and a **dedicated design-system & layout elevation** (planned). This doc's internal
+> numbering is unchanged; PR2 (tldraw) and PR3 (immersive) below are simply scheduled after those.
+
 ## The four gaps (verified in code)
 1. **Controls are inert.** `ControlsBar.tsx` renders toggle/slider/select/stepper widgets with
    local `useState`; nothing drives the stage. Only molecular3d `representation` is wired, via a

@@ -1,8 +1,9 @@
 // Generated from the Supabase schema (supabase/migrations). Regenerate after schema changes:
 //   npx supabase gen types typescript --project-id <ref> > lib/database.types.ts
 // (or via the Supabase MCP generate_typescript_types tool). Keep in sync with the migrations.
-// NOTE: the 0004 editorial-workflow tables/columns below were authored by hand alongside the
-// migration; regenerate from the live DB once 0004 is applied.
+// NOTE: the 0004 editorial-workflow tables/columns and the 0008 routine_configs / app_settings
+// tables below were authored by hand alongside the migration; regenerate from the live DB once the
+// migrations are applied.
 
 export type Json =
   | string
@@ -18,6 +19,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          key: string
+          updated_at: string
+          updated_by: string | null
+          value: string | null
+        }
+        Insert: {
+          key: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string | null
+        }
+        Update: {
+          key?: string
+          updated_at?: string
+          updated_by?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
       artifact_sources: {
         Row: {
           artifact_id: string
@@ -287,6 +309,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      routine_configs: {
+        Row: {
+          fire_url: string | null
+          token: string | null
+          updated_at: string
+          updated_by: string | null
+          worker: string
+        }
+        Insert: {
+          fire_url?: string | null
+          token?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          worker: string
+        }
+        Update: {
+          fire_url?: string | null
+          token?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          worker?: string
+        }
+        Relationships: []
       }
       series: {
         Row: {

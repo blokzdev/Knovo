@@ -46,6 +46,12 @@ One branch/PR each, owner merges between:
 - **PR2:** tldraw `diagram` rendering (read-only snapshot, lazy/client-only).
 - **PR3:** immersive responsive mode (fullscreen stage / drawer panels / overlay controls).
 
+> **Sequence note (2026-06-23):** two PRs were inserted ahead of the remaining renderer work, so
+> the overall order is: **admin BYOK settings** (done, `0008` — `/admin/settings` stores routine
+> fire URLs + tokens + `KNOVO_API_BASE`; unblocks dashboard dispatch without a redeploy) →
+> **design-system & layout elevation** (dedicated, planned) → renderer **PR2 (tldraw)** → renderer
+> **PR3 (immersive)**.
+
 **1c — Public read site (DONE 2026-06-22):** SSR live-published artifacts at clean URLs
 (`/a/<slug>`) via the shared `<ArtifactRenderer>`, with generateMetadata + JSON-LD
 (`ScholarlyArticle`); `/explore` browse, `/series/<slug>` pages, an RSS feed (`/feed.xml`),
@@ -59,9 +65,10 @@ denormalized onto the comment row → no SECURITY DEFINER view; RLS `(select aut
 indexes — clean Supabase security advisors).
 
 **Phase 1 status:** code-complete (author → review → publish → public read → reader engagement).
-Remaining to *run* the loop end-to-end is operational: worker tokens + routine fire URLs in
-Vercel/Claude, and a first worker-authored, admin-published artifact. Next dev work is
-**1b-follow** (renderer hardening).
+Remaining to *run* the loop end-to-end is operational: worker tokens in Vercel + a first
+worker-authored, admin-published artifact. The routine **fire URLs + tokens** can now be set by the
+admin in `/admin/settings` (`0008`, BYOK) instead of redeploying env vars. Next dev work is
+**1b-follow** (renderer hardening), now preceded by the design-system elevation PR.
 
 **Phase 1 gate (sketch):** a worker drafts a real finding via the API; the admin reviews,
 comments/directs in the HUD, and the Editor iterates and publishes on direction; the published
