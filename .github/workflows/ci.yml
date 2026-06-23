@@ -1,19 +1,11 @@
 name: CI
 
-# Minimal merge gate to conserve private-repo Actions minutes: runs only on PRs to main,
-# skips docs-only changes, and cancels superseded runs. Local verification is the primary gate.
+# Manual-only: the repo is private (Actions minutes are metered) and verification is
+# local-first — local `npm run lint && npm run typecheck && npm test && npm run build`
+# (plus screenshot UI checks) is the gate. Run this workflow on demand from the Actions
+# tab if a clean-room CI check is ever wanted (e.g. before a release or if the repo goes public).
 on:
-  pull_request:
-    branches: [main]
-    paths-ignore:
-      - "**.md"
-      - "docs/**"
-      - "foundation/**"
   workflow_dispatch:
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
 
 jobs:
   build:
