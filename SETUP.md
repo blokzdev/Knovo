@@ -109,14 +109,15 @@ Workers run as **routines** in the Claude web app, sharing one **cloud environme
 https://code.claude.com/docs/en/claude-code-on-the-web
 
 ### 7a. Create the shared "Knovo" cloud environment
-1. Go to **claude.ai/code → Environments → New environment**.
-2. **Name:** `Knovo`.
-3. **Repository / source:** select the **Knovo** repo (gives workers repo context for skills;
-   they never push code).
-4. **Network access → Custom (allowlist):** `api.knovo.ai`, `data.rcsb.org`, `files.rcsb.org`.
-   (MCP connector traffic is routed through Anthropic and needs no allowlisting.)
-5. **Environment variables** — the routine-side values the workers send to the governed API.
-   Add each as a variable on the environment:
+Open the cloud-environment selector (the cloud icon) → **Add environment**. The **New cloud
+environment** dialog has four fields — there is **no repository field here** (the repo is chosen
+per routine, §7b):
+1. **Name:** `Knovo`.
+2. **Network access → Custom:** in the **Allowed domains** field, one per line: `api.knovo.ai`,
+   `data.rcsb.org`, `files.rcsb.org`. Leave *"Also include default list of common package managers"*
+   unchecked (workers install nothing). MCP connector traffic routes through Anthropic and needs no
+   allowlisting. (**Full** also works but is looser.)
+3. **Environment variables** — `.env` format, one `KEY=value` per line, **no quotes**:
 
    | Variable | Value |
    |---|---|
@@ -126,13 +127,24 @@ https://code.claude.com/docs/en/claude-code-on-the-web
    | `KNOVO_WORKER_TOKEN_KEEPER` | same secret set in Vercel (§6.2) |
 
    Each token MUST equal the value Vercel verifies against (§6.2); the API verb-scopes each token
-   (`docs/routines.md`). **Never** put the Supabase service-role key (or any DB credential) here.
-6. Save. The "Knovo" environment is now selectable when creating each routine.
+   (`docs/routines.md`). **Caveat:** Claude has no separate secrets store, so these tokens live in
+   the (platform-non-secret) env vars — visible to anyone who can edit this environment. That's
+   acceptable for the single-admin model; the tokens are verb-scoped + revocable (rotate if the
+   environment is ever shared). **Never** put the Supabase service-role key (or any DB credential) here.
+4. **Setup script** — *optional, not required.* Workers only `curl` the API + use connectors (both
+   available by default). Optional non-fatal probe to confirm the allowlist is right:
+   ```bash
+   #!/bin/bash
+   curl -sS -o /dev/null -w "Knovo API reachable: HTTP %{http_code}\n" "$KNOVO_API_BASE" || true
+   ```
+5. **Create environment.** It is now selectable when creating each routine.
 
 ### 7b. Create the three routines
 In **claude.ai/code → Routines**, create **Scout**, **Editor**, and **Keeper** per
 `docs/routines.md` (names + paste-ready instructions). For each routine:
 - **Environment:** select **Knovo** (from §7a) so it inherits the network policy + env vars.
+- **Repository:** select the **Knovo** repo (the routine clones it for skills/context; workers do
+  not push code — pushes are branch-restricted by the GitHub proxy anyway).
 - **Connectors:** Scout & Keeper = bioRxiv/ChEMBL/PubMed; Editor = + tldraw; remove all others
   (especially Supabase).
 - **Triggers:** Scout = Schedule (daily) + API; Editor = API (+ optional hourly sweep);

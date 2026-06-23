@@ -1,63 +1,107 @@
 import { ChevronRight } from "lucide-react";
 import { CodeBlock } from "@/components/common/CodeBlock";
 
-// Instructional disclosure: how to mint a routine's API trigger credentials and what to put on the
-// routine's "Knovo" cloud environment. Built on a native <details> so it needs no JS, is
-// keyboard-accessible, and renders server-side. The env block is templated with the saved
-// KNOVO_API_BASE (reference only — dispatch uses each routine's fire URL, not this value).
+// Instructional disclosure for the shared "Knovo" cloud environment, mirroring the Claude web app's
+// "New cloud environment" modal field-for-field (Name → Network access → Environment variables →
+// Setup script), then the per-routine steps. Native <details> so it needs no JS, is keyboard-
+// accessible, and renders server-side. The env block is templated with the saved KNOVO_API_BASE.
 export function RoutineSetupGuide({ knovoApiBase }: { knovoApiBase: string }) {
   const base = knovoApiBase || "https://api.knovo.ai";
+  const allowedDomainsBlock = ["api.knovo.ai", "data.rcsb.org", "files.rcsb.org"].join("\n");
   const envBlock = [
     `KNOVO_API_BASE=${base}`,
     `KNOVO_WORKER_TOKEN_SCOUT=<same value as in Vercel>`,
     `KNOVO_WORKER_TOKEN_EDITOR=<same value as in Vercel>`,
     `KNOVO_WORKER_TOKEN_KEEPER=<same value as in Vercel>`,
   ].join("\n");
-  const allowlistBlock = ["api.knovo.ai", "data.rcsb.org", "files.rcsb.org"].join("\n");
+  // Optional: workers only curl the governed API + use MCP, so no setup is required. This non-fatal
+  // probe confirms the API is reachable — i.e. that the Custom allowlist above is correct.
+  const setupScript = [
+    "#!/bin/bash",
+    'curl -sS -o /dev/null -w "Knovo API reachable: HTTP %{http_code}\\n" "$KNOVO_API_BASE" || true',
+  ].join("\n");
 
   return (
     <details className="group rounded-xl border border-border bg-card">
       <summary className="flex cursor-pointer list-none items-center gap-2 p-4 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
         <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
-        Shared setup — do this once for all three routines
+        Shared setup — the &ldquo;Knovo&rdquo; cloud environment (do this once for all three routines)
       </summary>
       <div className="space-y-4 border-t border-border p-4 text-sm leading-6 text-foreground">
         <p className="text-muted-foreground">
-          The three routines share one reusable <span className="font-medium">&ldquo;Knovo&rdquo;</span>{" "}
-          cloud environment — configure it once, then attach it to each routine. The per-worker prompt,
-          connectors, and trigger live in the tabs below.
+          In the Claude web app, create one reusable cloud environment and attach it to all three
+          routines. The fields below match the <span className="font-medium">New cloud environment</span>{" "}
+          dialog. The per-worker prompt, connectors, and trigger live in the tabs below.
         </p>
-        <ol className="list-decimal space-y-2 pl-5">
+
+        <ol className="list-decimal space-y-4 pl-5">
           <li>
-            Create a cloud environment named <span className="font-medium">&ldquo;Knovo&rdquo;</span> and
-            set its network access to <span className="font-medium">Custom</span> with this allowlist:
+            <span className="font-medium">Name</span> → <span className="font-mono text-xs">Knovo</span>.
+          </li>
+
+          <li>
+            <span className="font-medium">Network access</span> → choose{" "}
+            <span className="font-medium">Custom</span> and paste these into the{" "}
+            <span className="font-medium">Allowed domains</span> field (leave{" "}
+            <em>Also include default list of common package managers</em> unchecked — the workers
+            install nothing). MCP connectors route through Anthropic, so they need no allowlisting.
+            <span className="mt-1 block text-xs text-muted-foreground">
+              Prefer least privilege; <span className="font-medium">Full</span> also works if you want a
+              simpler, looser setup.
+            </span>
+            <div className="mt-2">
+              <CodeBlock code={allowedDomainsBlock} copyLabel="Copy domains" />
+            </div>
+          </li>
+
+          <li>
+            <span className="font-medium">Environment variables</span> → paste this{" "}
+            <span className="font-mono text-xs">.env</span> block (one{" "}
+            <span className="font-mono text-xs">KEY=value</span> per line, no quotes):
+            <div className="mt-2">
+              <CodeBlock code={envBlock} copyLabel="Copy variables" />
+            </div>
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Claude has no separate secrets store, so the bearer tokens live here. They&apos;re visible
+              to anyone who can edit this environment — in Knovo&apos;s single-admin setup that&apos;s just
+              you. Each token is verb-scoped and revocable (see each worker&apos;s tab); rotate it if you
+              ever share the environment. Never put the Supabase service-role key here.
+            </p>
+          </li>
+
+          <li>
+            <span className="font-medium">Setup script</span> →{" "}
+            <span className="text-muted-foreground">optional, not required.</span> Workers only call the
+            API and use connectors, both available by default. If you want a setup-time check that the
+            allowlist is right, paste this non-fatal probe:
+            <div className="mt-2">
+              <CodeBlock code={setupScript} copyLabel="Copy script" />
+            </div>
           </li>
         </ol>
-        <div>
-          <p className="mb-1.5 text-xs font-medium text-muted-foreground">Network allowlist</p>
-          <CodeBlock code={allowlistBlock} />
+
+        <div className="rounded-lg border border-border bg-muted/40 p-3">
+          <p className="text-xs font-medium text-foreground">Then, for each routine (in its tab below):</p>
+          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+            <li>
+              select the <span className="font-medium">Knovo</span> environment and the{" "}
+              <span className="font-medium">Knovo</span> repository (the routine clones it for context —
+              it never pushes code);
+            </li>
+            <li>set its connectors, triggers, and paste its system prompt from the tab;</li>
+            <li>
+              add a trigger → <span className="font-medium">API</span> → Generate token, then paste the
+              trigger URL +{" "}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">sk-ant-oat01-…</code>{" "}
+              token into that worker&apos;s trigger card.
+            </li>
+          </ul>
         </div>
-        <ol className="list-decimal space-y-2 pl-5" start={2}>
-          <li>
-            Set the environment variables below (the worker tokens must match the values in Vercel),
-            then select the <span className="font-medium">Knovo</span> repository.
-          </li>
-        </ol>
-        <div>
-          <p className="mb-1.5 text-xs font-medium text-muted-foreground">Routine environment variables</p>
-          <CodeBlock code={envBlock} />
-        </div>
-        <ol className="list-decimal space-y-2 pl-5" start={3}>
-          <li>
-            For each routine: mint its trigger via Add trigger → <span className="font-medium">API</span> →
-            Generate token, and paste the trigger URL +{" "}
-            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">sk-ant-oat01-…</code> token into
-            that worker&apos;s tab below.
-          </li>
-        </ol>
+
         <p className="text-xs text-muted-foreground">
-          The worker tokens are verified server-side from Vercel env and are never stored or shown
-          here. See <span className="font-medium">SETUP.md §7a</span> for the full walkthrough.
+          The dashboard trigger token (the <span className="font-mono">sk-ant-oat01-…</span> value) is
+          stored masked and server-only, never shown again. See{" "}
+          <span className="font-medium">SETUP.md §7</span> for the full walkthrough.
         </p>
       </div>
     </details>

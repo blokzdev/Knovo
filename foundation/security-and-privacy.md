@@ -101,10 +101,14 @@ and bypasses RLS — governance is enforced in the API instead).
 - Source `raw_meta` stores public scientific metadata only — no personal data.
 
 ## Network isolation (routine cloud env)
-Routine sessions run in a network-allowlisted cloud env: MCP connector traffic is routed
-through Anthropic, but direct HTTPS to other hosts is blocked unless allowlisted. Each worker's
-env allows only `api.knovo.ai` (the governed API) plus `data.rcsb.org`/`files.rcsb.org` (PDB),
-and holds its `KNOVO_WORKER_TOKEN_*` as an env var. See `docs/routines.md`.
+Routine sessions share one network-allowlisted cloud env ("Knovo", **Custom** access): MCP
+connector traffic is routed through Anthropic, but direct HTTPS to other hosts is blocked unless
+allowlisted. The allowlist is only `api.knovo.ai` (the governed API) plus `data.rcsb.org`/
+`files.rcsb.org` (PDB); the env holds the three `KNOVO_WORKER_TOKEN_*` as env vars. **Caveat:**
+Claude Code on the web has no separate secrets store, so these bearer tokens sit in (platform-
+non-secret) env vars, visible to anyone who can edit the environment — acceptable under the
+single-admin model; tokens are verb-scoped + revocable, so rotate if the environment is ever
+shared. See `docs/routines.md`.
 
 ## Open questions
 - **Resolved (2026-06-22):** the routine's least-privilege mechanism is the **governed Knovo
