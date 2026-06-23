@@ -100,17 +100,45 @@ The API uses `SUPABASE_SERVICE_ROLE_KEY` server-side and enforces zod validation
 admin-directed publish gate, audit logging, and soft-delete. Never give a worker the
 service-role key or the Supabase connector.
 
-## 7. Create the three routines (Claude web app)
-In claude.ai/code/routines, create **Scout**, **Editor**, and **Keeper** per `docs/routines.md`
-(names, triggers, connectors, paste-ready instructions). For each routine's **cloud environment**:
-- **Network access → Custom:** allow `api.knovo.ai`, `data.rcsb.org`, `files.rcsb.org`.
-- **Environment variables:** `KNOVO_API_BASE=https://api.knovo.ai` and the matching
-  `KNOVO_WORKER_TOKEN_SCOUT` / `_EDITOR` / `_KEEPER` (same value as Vercel).
+## 7. The routine cloud environment + the three routines (Claude web app)
+Workers run as **routines** in the Claude web app, sharing one **cloud environment** named
+**"Knovo"**. Create the environment once, then attach it to all three routines. Background:
+https://code.claude.com/docs/en/claude-code-on-the-web
+
+### 7a. Create the shared "Knovo" cloud environment
+1. Go to **claude.ai/code → Environments → New environment**.
+2. **Name:** `Knovo`.
+3. **Repository / source:** select the **Knovo** repo (gives workers repo context for skills;
+   they never push code).
+4. **Network access → Custom (allowlist):** `api.knovo.ai`, `data.rcsb.org`, `files.rcsb.org`.
+   (MCP connector traffic is routed through Anthropic and needs no allowlisting.)
+5. **Environment variables** — the routine-side values the workers send to the governed API.
+   Add each as a variable on the environment:
+
+   | Variable | Value |
+   |---|---|
+   | `KNOVO_API_BASE` | `https://api.knovo.ai` |
+   | `KNOVO_WORKER_TOKEN_SCOUT` | same secret set in Vercel (§6.2) |
+   | `KNOVO_WORKER_TOKEN_EDITOR` | same secret set in Vercel (§6.2) |
+   | `KNOVO_WORKER_TOKEN_KEEPER` | same secret set in Vercel (§6.2) |
+
+   Each token MUST equal the value Vercel verifies against (§6.2); the API verb-scopes each token
+   (`docs/routines.md`). **Never** put the Supabase service-role key (or any DB credential) here.
+6. Save. The "Knovo" environment is now selectable when creating each routine.
+
+### 7b. Create the three routines
+In **claude.ai/code → Routines**, create **Scout**, **Editor**, and **Keeper** per
+`docs/routines.md` (names + paste-ready instructions). For each routine:
+- **Environment:** select **Knovo** (from §7a) so it inherits the network policy + env vars.
 - **Connectors:** Scout & Keeper = bioRxiv/ChEMBL/PubMed; Editor = + tldraw; remove all others
   (especially Supabase).
-Triggers: Scout = Schedule (daily) + API; Editor = API (+ optional hourly sweep); Keeper =
-Schedule (weekly) + API. Whenever schema/connectors/flow change, regenerate `docs/routines.md`
-and re-paste.
+- **Triggers:** Scout = Schedule (daily) + API; Editor = API (+ optional hourly sweep);
+  Keeper = Schedule (weekly) + API.
+- **API trigger token:** add an API trigger, then copy its URL + `sk-ant-oat01-…` token into the
+  Vercel env as `ROUTINE_{SCOUT,EDITOR,KEEPER}_FIRE_URL` / `_TOKEN` (§6.3) so the dashboard
+  "run now" can fire it.
+
+Whenever the schema/connectors/flow change, regenerate `docs/routines.md` and re-paste.
 
 ## Migrations
 SQL lives in `supabase/migrations/` (`0001`–`0004`). Apply new migrations to **dev first, then

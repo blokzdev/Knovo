@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import type { ArtifactDocV1 } from "@/lib/artifact-schema";
+import type { ParamsMap, ParamValue } from "@/lib/renderer/params";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -13,30 +13,54 @@ import {
 
 type Control = ArtifactDocV1["controls"][number];
 
-// Renders the artifact's declared controls as live widgets. For v1 they hold local state; the
-// full control→stage param grammar (driving the stage from arbitrary params) is a follow-up.
-export function ControlsBar({ controls }: { controls: Control[] }) {
+// Renders the artifact's declared controls as live widgets. Controlled: each widget's value lives
+// in the parent's params map (keyed by control.param) and changes flow up via onChange, so the
+// controls actually drive the stage. See lib/renderer/params.ts for the param grammar.
+export function ControlsBar({
+  controls,
+  values,
+  onChange,
+}: {
+  controls: Control[];
+  values: ParamsMap;
+  onChange: (param: string, value: ParamValue) => void;
+}) {
   if (controls.length === 0) return null;
   return (
     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
       {controls.map((c) => (
-        <ControlWidget key={c.id} control={c} />
+        <ControlWidget
+          key={c.id}
+          control={c}
+          value={values[c.param] ?? c.default}
+          onChange={onChange}
+        />
       ))}
     </div>
   );
 }
 
-function ControlWidget({ control }: { control: Control }) {
-  const [val, setVal] = useState<string | number | boolean | undefined>(control.default);
-
+function ControlWidget({
+  control,
+  value,
+  onChange,
+}: {
+  control: Control;
+  value: ParamValue | undefined;
+  onChange: (param: string, value: ParamValue) => void;
+}) {
+  const num = typeof value === "number" ? value : 0;
   return (
     <div className="flex items-center gap-2">
       <span className="text-xs font-medium text-neutral-600">{control.label}</span>
       {control.kind === "toggle" && (
-        <Switch checked={Boolean(val)} onCheckedChange={(v) => setVal(v)} />
+        <Switch checked={Boolean(value)} onCheckedChange={(v) => onChange(control.param, v)} />
       )}
       {control.kind === "select" && (
-        <Select value={val != null ? String(val) : undefined} onValueChange={(v) => setVal(v)}>
+        <Select
+          value={value != null ? String(value) : undefined}
+          onValueChange={(v) => onChange(control.param, v)}
+        >
           <SelectTrigger className="h-8 w-[140px] text-xs">
             <SelectValue placeholder="Select…" />
           </SelectTrigger>
@@ -53,24 +77,22 @@ function ControlWidget({ control }: { control: Control }) {
         <input
           type="range"
           className="h-1.5 w-32 cursor-pointer accent-neutral-900"
-          value={typeof val === "number" ? val : 0}
-          onChange={(e) => setVal(Number(e.target.value))}
+          value={num}
+          onChange={(e) => onChange(control.param, Number(e.target.value))}
         />
       )}
       {control.kind === "stepper" && (
         <div className="inline-flex items-center gap-2">
           <button
             className="h-6 w-6 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
-            onClick={() => setVal((typeof val === "number" ? val : 0) - 1)}
+            onClick={() => onChange(control.param, num - 1)}
           >
             −
           </button>
-          <span className="min-w-5 text-center text-xs tabular-nums">
-            {typeof val === "number" ? val : 0}
-          </span>
+          <span className="min-w-5 text-center text-xs tabular-nums">{num}</span>
           <button
             className="h-6 w-6 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
-            onClick={() => setVal((typeof val === "number" ? val : 0) + 1)}
+            onClick={() => onChange(control.param, num + 1)}
           >
             +
           </button>

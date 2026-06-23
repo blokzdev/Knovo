@@ -21,7 +21,11 @@ type ChartStageT = Extract<ArtifactDocV1["stage"], { kind: "chart" }>;
 
 const PALETTE = ["#4f46e5", "#22d3ee", "#f59e0b", "#10b981", "#f43f5e", "#a855f7"];
 
-export function ChartStage({ stage }: { stage: ChartStageT }) {
+// recharts requires an explicit domain for a log scale to render; values must be positive (the
+// y-log toggle is for positive metrics like IC50 — data positivity is the routine's responsibility).
+const LOG_DOMAIN = ["auto", "auto"] as ["auto", "auto"];
+
+export function ChartStage({ stage, yLog }: { stage: ChartStageT; yLog: boolean }) {
   // Avoid SSR/responsive width warnings — render the chart after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -40,7 +44,12 @@ export function ChartStage({ stage }: { stage: ChartStageT }) {
           <BarChart>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
+            <YAxis
+              tick={{ fontSize: 11 }}
+              scale={yLog ? "log" : "auto"}
+              domain={yLog ? LOG_DOMAIN : undefined}
+              allowDataOverflow={yLog}
+            />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             {stage.series.map((s, i) => (
@@ -51,7 +60,15 @@ export function ChartStage({ stage }: { stage: ChartStageT }) {
           <ScatterChart>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis type="number" dataKey={xKey} name={xKey} tick={{ fontSize: 11 }} />
-            <YAxis type="number" dataKey={yKey} name={yKey} tick={{ fontSize: 11 }} />
+            <YAxis
+              type="number"
+              dataKey={yKey}
+              name={yKey}
+              tick={{ fontSize: 11 }}
+              scale={yLog ? "log" : "auto"}
+              domain={yLog ? LOG_DOMAIN : undefined}
+              allowDataOverflow={yLog}
+            />
             <Tooltip cursor={{ strokeDasharray: "3 3" }} />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             {stage.series.map((s, i) => (
@@ -62,7 +79,12 @@ export function ChartStage({ stage }: { stage: ChartStageT }) {
           <LineChart>
             <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
             <XAxis dataKey={xKey} tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
+            <YAxis
+              tick={{ fontSize: 11 }}
+              scale={yLog ? "log" : "auto"}
+              domain={yLog ? LOG_DOMAIN : undefined}
+              allowDataOverflow={yLog}
+            />
             <Tooltip />
             <Legend wrapperStyle={{ fontSize: 12 }} />
             {stage.series.map((s, i) => (

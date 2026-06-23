@@ -2,6 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { ArtifactDocV1 } from "@/lib/artifact-schema";
+import {
+  getRepresentation,
+  getSpin,
+  isHighlightVisible,
+  DEFAULT_HIGHLIGHT_COLOR,
+  type ParamsMap,
+} from "@/lib/renderer/params";
+import { parseSelection } from "@/lib/renderer/selection";
 
 type Mol3D = Extract<ArtifactDocV1["stage"], { kind: "molecular3d" }>;
 type Representation = Mol3D["representation"];
@@ -9,7 +17,9 @@ type Representation = Mol3D["representation"];
 // Minimal structural typing for the 3Dmol.js viewer (the package ships no usable types here).
 type MolViewer = {
   setStyle: (sel: object, style: object) => void;
-  zoomTo: () => void;
+  addStyle: (sel: object, style: object) => void;
+  spin: (axis: string | boolean) => void;
+  zoomTo: (sel?: object) => void;
   render: () => void;
   clear?: () => void;
 };
@@ -20,8 +30,8 @@ type Mol3DModule = {
 };
 
 // 3Dmol.js is loaded lazily (client-only) so it never touches SSR or the server bundle. The
-// structure is fetched directly from RCSB by PDB id. Highlight selection→3D mapping (the slot
-// schema's open "selection grammar" question) is deferred — highlights are listed as captions.
+// structure is fetched directly from RCSB by PDB id. Highlights map the slot schema's selection
+// grammar (lib/renderer/selection.ts) onto colored 3D styles over the base representation.
 function styleFor(rep: Representation): Record<string, unknown> {
   switch (rep) {
     case "sticks":
@@ -35,25 +45,46 @@ function styleFor(rep: Representation): Record<string, unknown> {
   }
 }
 
-export function Molecular3DStage({
-  stage,
-  representation,
-}: {
-  stage: Mol3D;
-  representation: Representation;
-}) {
+// A highlight overrides the base style on its selection with a solid color. surface falls back to
+// cartoon, matching styleFor (real surface rendering is a follow-up).
+function coloredStyleFor(rep: Representation, color: string): Record<string, unknown> {
+  switch (rep) {
+    case "sticks":
+      return { stick: { color } };
+    case "spheres":
+      return { sphere: { color } };
+    case "surface":
+    case "cartoon":
+    default:
+      return { cartoon: { color } };
+  }
+}
+
+export function Molecular3DStage({ stage, params }: { stage: Mol3D; params: ParamsMap }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<MolViewer | null>(null);
+  const cameraSetRef = useRef(false);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const isPdb = stage.source.db === "pdb";
 
-  // Load the structure once per PDB id.
+  const rep = getRepresentation(params, stage);
+  const spin = getSpin(params);
+  // A precise signature of everything that affects the paint, so the re-style effect re-runs
+  // exactly when one of those inputs changes (and not on every unrelated render).
+  const styleKey = JSON.stringify({
+    rep,
+    spin,
+    highlights: stage.highlights.map((h) => [h.id, isHighlightVisible(params, h.id), h.color ?? null]),
+  });
+
+  // Load the structure once per PDB id; the re-style effect paints once status flips to ready.
   useEffect(() => {
     if (!isPdb || !hostRef.current) {
       setStatus("error");
       return;
     }
     let cancelled = false;
+    cameraSetRef.current = false;
     setStatus("loading");
     (async () => {
       try {
@@ -64,9 +95,6 @@ export function Molecular3DStage({
         viewerRef.current = viewer;
         $3Dmol.download(`pdb:${stage.source.uid}`, viewer, {}, () => {
           if (cancelled) return;
-          viewer.setStyle({}, styleFor(representation));
-          viewer.zoomTo();
-          viewer.render();
           setStatus("ready");
         });
       } catch {
@@ -85,13 +113,35 @@ export function Molecular3DStage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage.source.uid, isPdb]);
 
-  // Re-style on representation change without reloading the structure.
+  // Idempotent re-paint: base style, then re-add the visible highlights, then spin. Recomputed
+  // from scratch on every relevant change so toggles never accumulate. styleKey is the precise
+  // value signature of the inputs (representation / highlight visibility+color / spin).
   useEffect(() => {
     const viewer = viewerRef.current;
     if (!viewer || status !== "ready") return;
-    viewer.setStyle({}, styleFor(representation));
+
+    viewer.setStyle({}, styleFor(rep));
+    for (const h of stage.highlights) {
+      if (!isHighlightVisible(params, h.id)) continue;
+      const spec = parseSelection(h.selection);
+      if (!spec) continue; // unparseable selection -> skip this highlight, never throw
+      viewer.addStyle(spec, coloredStyleFor(rep, h.color ?? DEFAULT_HIGHLIGHT_COLOR));
+    }
+    viewer.spin(spin ? "y" : false);
+
+    // Best-effort initial camera (advisory): on first paint only, frame the highlight named by
+    // initialCamera.preset if it maps to one; otherwise frame the whole structure. Never refit on
+    // later re-styles so the camera doesn't jump while the reader interacts.
+    if (!cameraSetRef.current) {
+      cameraSetRef.current = true;
+      const preset = stage.initialCamera?.preset;
+      const target = preset ? stage.highlights.find((h) => h.id === preset) : undefined;
+      const sel = target ? parseSelection(target.selection) : null;
+      viewer.zoomTo(sel ?? undefined);
+    }
     viewer.render();
-  }, [representation, status]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [styleKey, status]);
 
   return (
     <div className="relative h-[360px] w-full overflow-hidden rounded-lg border border-neutral-200 bg-white">

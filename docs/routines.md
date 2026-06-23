@@ -14,12 +14,15 @@ database credential. Three workers:
 - **Keeper** — keep the published library healthy: re-verify sources, flag drift to the admin.
 
 ## Shared environment (set on each routine's cloud environment)
+Create one reusable cloud environment named **"Knovo"** and attach it to all three routines.
+Step-by-step in **`SETUP.md` §7a** (Claude Code on the web). In summary:
 - **Network access:** Custom — allow `api.knovo.ai`, `data.rcsb.org`, `files.rcsb.org`
   (MCP connector traffic is routed through Anthropic and needs no allowlisting).
 - **Environment variables:**
   - `KNOVO_API_BASE = https://api.knovo.ai`
-  - `KNOVO_WORKER_TOKEN_SCOUT` (Scout) / `KNOVO_WORKER_TOKEN_EDITOR` (Editor) — the same secret
-    value configured in the Knovo app env (see `.env.example`, `SETUP.md`).
+  - `KNOVO_WORKER_TOKEN_SCOUT` (Scout) / `KNOVO_WORKER_TOKEN_EDITOR` (Editor) /
+    `KNOVO_WORKER_TOKEN_KEEPER` (Keeper) — each the same secret value configured in the Knovo app
+    env (see `.env.example`, `SETUP.md`).
 - **Repository:** select **Knovo** (for skills/context; workers do not push code).
 
 The API verb-scopes each token: **Scout** = `dedup`, `create`; **Editor** = `dedup`, `queue`,
@@ -65,14 +68,22 @@ KNOVO_WORKER_TOKEN_SCOUT (Authorization: Bearer $KNOVO_WORKER_TOKEN_SCOUT).
    PRIMARY source comes back seen:true or rejected:true, STOP — do not draft.
 
 4. COMPOSE the artifact by filling the slot schema ONLY (current schemaVersion). Slots:
-   - stage: exactly one — "molecular3d" { source:{db,uid}, representation, highlights[],
-     initialCamera }, "diagram" { snapshot }, or "chart" { chartType, axes, series }.
+   - stage: exactly one — "molecular3d" { source:{db,uid}, representation, highlights[]:{id,
+     selection, color?}, initialCamera }, "diagram" { snapshot }, or "chart" { chartType, axes,
+     series }.
    - panels[]: "prose" | "keyvalue" | "figure".
    - controls[]: { id, label, kind: toggle|slider|select|stepper, target:<stage id>, param,
-     options }.
+     options?, default? }. The renderer only drives these `param` values (per stage kind):
+       * molecular3d: "representation" (cartoon|surface|sticks|spheres),
+         "highlights.<id>.visible" (toggle), "spin" (toggle).
+       * chart: "axes.y.log" (toggle; needs positive y-values).
+   - highlights[].selection uses a small PDB-selection subset the renderer understands:
+     "chain X", "resi N", "resi N-M", "resi N,M", "chain X and resi N-M". A highlight whose
+     selection falls outside this renders nothing — stay within it.
    - captions[]: { id, target:<slot id or "stage:<highlightId>">, text }.
    Give every slot a stable id. Do NOT emit layout/HTML/CSS/components and do NOT invent slot
-   kinds or fields. Provenance footer is auto-rendered — do not author it.
+   kinds, fields, control params, or selection syntax. Provenance footer is auto-rendered — do
+   not author it.
 
 5. CREATE. POST {KNOVO_API_BASE}/worker/artifacts with:
      {"doc": <the slot document incl. schemaVersion, title, summary, stage, ...>,
@@ -128,9 +139,11 @@ treat it as the admin's immediate instruction in addition to the queue.
       - if publish_after is true: POST .../status {"to":"published"} (the API allows it because the
         directive is flagged publish_after).
       - else, if you changed a draft: POST .../status {"to":"needs_review"} so the admin re-reviews.
-   Keep filling slots ONLY — never emit layout or new slot kinds. The API zod-validates every
-   write (422 on failure) and snapshots a revision automatically. If you're unsure or blocked,
-   POST .../flag instead of acting wrongly.
+   Keep filling slots ONLY — never emit layout or new slot kinds. Controls only drive the stage
+   through the documented `param` values, and highlights must use the documented `selection`
+   subset (see Scout step 4); anything outside those is inert. The API zod-validates every write
+   (422 on failure) and snapshots a revision automatically. If you're unsure or blocked, POST
+   .../flag instead of acting wrongly.
 
 3. RESOLVE each handled item: POST {KNOVO_API_BASE}/worker/comments/{comment_id}/resolve
    {"disposition":"addressed"} (or "dismissed", with a note, if no action was appropriate).
@@ -183,6 +196,12 @@ Process the batch and stop. Prefer flagging over guessing; never fabricate a cor
 ---
 
 ## Change log
+- **v4 (2026-06-23) — renderer hardening (1b-follow PR1).** The renderer now consumes the
+  control→stage **param grammar** (per stage kind) and the molecular3d highlight **selection
+  grammar**, so controls drive the stage and highlights render in 3D (colored overlays + toggle +
+  spin; chart `axes.y.log`). No schema/connector change and the create/iterate flow is unchanged —
+  this only documents which `param`/`selection` values are *effective*. Re-paste **Scout step 4**
+  and the **Editor** slot note above.
 - **No routine change — 2026-06-22 (`0005` reader engagement).** Phase 1d added reader accounts,
   bookmarks, public `reader_comments`, and `subscriptions`. These live **outside** the worker API
   and slot schema — the worker-facing schema, connectors, and generation flow are unchanged — so

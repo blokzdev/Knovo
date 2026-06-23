@@ -136,6 +136,6 @@ Files: `components/renderer/ArtifactRenderer.tsx` (+ likely a new `ImmersiveShel
 
 ## Status
 - [x] PR0 — migration `0007` (advisors 0028/0029) + this plan capture.
-- [ ] PR1 — interactive controls + 3D highlights (+ vitest, grammars, routines, seed).
+- [x] PR1 — interactive controls + 3D highlights (+ vitest, grammars, routines, seed).
 - [ ] PR2 — tldraw diagram.
 - [ ] PR3 — immersive mode.
