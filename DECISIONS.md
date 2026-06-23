@@ -36,6 +36,21 @@ proposal to `BACKLOG.md` and ask (per `CLAUDE.md`).
 > assumptions), **Decision 4** (per-tenant tokens), **Decision 8** (per-worker `params` storage), and
 > **Decision 9** (templated/composed prompt vocabulary). Until then, propose-and-ask still applies.
 
+> **2026-06-23 — GemBlog platform note (NOT an amendment).** Extending the Platform-vision note above
+> with the owner's direction, the platform the engine becomes is **GemBlog** (domain **gemblog.co**),
+> with **Knovo as the molecular-science showcase tenant**. Recorded for conscious execution later:
+> **(a) Brand/domain** — rename Knovo → GemBlog at phase start; default per-tenant `‹slug›.gemblog.co`
+> subdomains + Pro custom domains. **(b) Repo topology** — rename the current repo → `gemblog` *in
+> place* (active line keeps history/CI/Vercel/Supabase), with a one-time `knovo-single-tenant`
+> snapshot as the frozen backup (`deployment.md`). **(c) Design framework** — a **universal core +
+> domain kits** model (the molecular stage/sources/grammar become the first kit; `artifact-schema.md`
+> → "Generalization"). **(d) Freemium** — free subdomain + DB-level generation quotas; paid custom
+> domains, higher quotas, and the autonomous Supervisor cadence (`monetization.md`). **This changes no
+> decision now** — all nine stay frozen and narrow-niche Decision 1 still governs the Knovo tenant.
+> When the relevant milestones are pulled, expect amendments to **Decision 6** (stack/brand →
+> GemBlog + subdomain/custom-domain routing) and **Decision 7** (no monetization → freemium), in
+> addition to the **1 / 2 / 4 / 8 / 9** flagged above. Until then, propose-and-ask still applies.
+
 | # | Decision | Rationale | Status |
 |---|---|---|---|
 | 1 | **Narrow niche only:** structural/molecular biology, molecular pharmacology, de novo protein & drug design. NOT broad biomedical, NOT patient-facing/consumer health. | Defensible wedge; trustworthy autonomous authoring needs a bounded domain. | Locked |

@@ -176,6 +176,30 @@ governance is enforced in the API, not RLS.**
   inserts/edits/deletes own; admin moderates any. Author display is denormalized on the row, so
   no separate profile read is needed for public rendering.
 
+## Multi-tenant data model (north star, not built)
+*(Recorded 2026-06-23. **Vision, not current scope** — the GemBlog direction in `vision.md`; maps to
+roadmap **M5**. Scope-wall per `CLAUDE.md` invariant #6. The schema today is **single-tenant** — there
+is no tenant discriminator anywhere. Nothing below is built.)*
+
+The current architecture is already the right shape for tenancy: workers never touch the DB, and the
+service-role key is server-only inside the governed API — so tenant isolation is enforced at one
+boundary. The future lift, recorded so it is done consciously:
+
+- **`tenants` table** — `(id, slug UNIQUE, name, plan enum, ‹limits›, domain, domain_verified_at,
+  status, created_at)`. `slug` → `‹slug›.gemblog.co`; `domain` → a Pro custom domain.
+- **Tenant discriminator** — add `tenant_id uuid NOT NULL FK→tenants` (+ composite indexes, e.g.
+  `(tenant_id, status)`) to every content/engagement table: `artifacts`, `sources`, `artifact_sources`,
+  `series`, `comments`, `revisions`, `audit_log`, `reader_comments`, `bookmarks`, `subscriptions`,
+  `routine_configs`. Dedup views (`seen_source_keys` / `rejected_source_keys`) become per-tenant.
+- **RLS rewrites (security-critical).** Every policy gains a tenant predicate; `is_admin()` becomes
+  `is_tenant_admin(tenant_id)`. This is the **audit-before-launch** piece — a missed predicate leaks
+  cross-tenant data. Needs a dedicated isolation test (TenantA cannot read TenantB).
+- **Per-tenant worker tokens** — `routine_configs` keyed by `(tenant_id, worker)`; the API resolves a
+  presented bearer token to its tenant (unique index on `(tenant_id, token)`) and checks the worker
+  acts only within that tenant.
+- **Quotas** — `usage_tracking(tenant_id, period, counts…)` + plan limits on the tenant row, enforced
+  at the API write boundary (`monetization.md`).
+
 ## Open questions
 - **Resolved (2026-06-22):** `published` edits mutate in place **and** snapshot the prior
   version to `revisions` (recoverable), rather than forking a new artifact row.

@@ -42,6 +42,22 @@ Vercel's **Hobby tier is non-commercial**. MVP (no monetization) can run on Hobb
 moment Knovo carries ads or paid features, it must move to **Pro** — flagged here so the
 tier decision is explicit when monetization is revisited (logged in BACKLOG.md).
 
+## Platform horizon (future): rebrand & tenancy
+*(Recorded 2026-06-23. **Vision, not current scope** — the GemBlog direction in `vision.md`; gated by
+the roadmap "Platform horizon" milestones. Scope-wall per `CLAUDE.md` invariant #6. Nothing below is
+built or executed in the recording PR.)*
+
+- **Repo topology (rename in place + snapshot backup).** At phase start, rename the current repo →
+  **`gemblog`** *in place* — the active line keeps its history, CI, and the existing Vercel/Supabase
+  project links (GitHub auto-redirects the old URL). Take a one-time **`knovo-single-tenant`** snapshot
+  (a tag + an archived fork) as the immutable backup. Rationale: the active platform work deserves the
+  mature integrations; the backup is a rarely-touched safety net, not the development line.
+- **Domains.** Each tenant gets a default **`‹slug›.gemblog.co`** subdomain (wildcard DNS → the Vercel
+  project); Pro tenants add a **custom/vanity domain** (`blog.you.com`) stored on `tenants.domain`.
+  `middleware.ts` host-routing — today only the `api.knovo.ai` → `/api/worker/*` split — extends to
+  **resolve the tenant from the request host** before serving. Cert/verification flow: `monetization.md`.
+- **Freemium tier ⇒ Vercel Pro.** See the Hosting tier note above; paid features require leaving Hobby.
+
 ## Deploy checklist (Phase 0 gate)
 - [ ] App runs locally against the dev Supabase project.
 - [ ] Schema applied with RLS on the dev project.
@@ -51,6 +67,7 @@ tier decision is explicit when monetization is revisited (logged in BACKLOG.md).
 - [ ] CI green on a no-op commit.
 
 ## Open questions
-- Custom domain + when to provision it. Trigger: first public launch.
+- Custom domain + when to provision it. Trigger: first public launch. *(Multi-tenant per-tenant
+  subdomains + Pro custom domains are the future GemBlog model — see "Platform horizon" above.)*
 - Whether prod Supabase needs PITR/backup tier beyond defaults. Trigger: real content the
   admin would hate to lose.

@@ -232,6 +232,41 @@ A kinase inhibitor's selectivity across targets.
 Provenance: ChEMBL `CHEMBL123` (primary) with bioactivity citation + the source publication
 (PMID).
 
+## Generalization: universal core + domain kits (north star)
+*(Recorded 2026-06-23. Vision, not current scope — the GemBlog platform direction in `vision.md`.
+Designed here so the schema stays kit-ready; **nothing below is built** until the roadmap "Platform
+horizon" milestone is pulled. Scope-wall per `CLAUDE.md` invariant #6.)*
+
+This schema is **mostly domain-neutral by design**. For the multi-tenant platform, it factors into a
+**universal core** every tenant shares and pluggable **domain kits** each niche registers.
+
+**Universal core (domain-neutral, reused as-is).** The document shape (stage / panels / controls /
+captions + auto provenance footer); the `chart` and `diagram` stages; all `panels` (prose / keyvalue
+/ figure); the `controls` vocabulary (toggle / slider / select / stepper); the **kind-dispatching
+renderer** and its responsive layout modes; the design tokens; and the governance machinery (zod
+validation, the relationship `superRefine` checks, versioning + normalize-on-read migration, the
+provenance footer). None of this is molecular.
+
+**A domain kit = three registrations.**
+1. **Stage kinds** — extra members of the `stage` discriminated union, each with its own renderer
+   component and per-kind **param grammar** (today: molecular → `molecular3d` + the PDB *highlight
+   selection grammar*; future: e.g. genomics → `genomicTrack`, networks → `networkDiagram`,
+   sequences → `sequenceAlignment`). The core renderer already dispatches on `kind`, so a kit adds a
+   branch — it never rewrites the renderer.
+2. **Source vocabulary** — the kit's `sourceRef.db` set + its provenance-footer `DB_LABEL` labels
+   (Knovo's molecular kit = `pdb | chembl | pubmed | biorxiv`). The grounding **contract** (≥1
+   stable, verifiable primary source, deduped on `(source_db, source_uid)`) is universal; only the
+   *registry* of allowed sources is per-kit.
+3. **Voice / niche conventions** — carried in the kit's harness constitution (`worker-harness.md`),
+   not the schema.
+
+**The three molecular seams to factor out** when kits land (today hard-coded for the Knovo tenant):
+the `molecular3d` stage + its selection grammar (`lib/renderer/selection.ts`), the `sourceRef.db`
+enum (`lib/artifact-schema.ts`, surfaced as `DB_LABEL` in `components/renderer/ProvenanceFooter.tsx`),
+and the niche-scoped worker prompts. Everything else is core. Registering a kit is a reviewed schema
+**version bump + migration** (same mechanism as *Versioning & migration* above); older artifacts keep
+rendering. Maps to roadmap **M4** (domain-kit registry).
+
 ## Open questions
 - Allow more than one stage per artifact (e.g. structure + chart side by side)? v1 = one
   stage. Trigger: a finding genuinely needs two co-equal hero surfaces.
