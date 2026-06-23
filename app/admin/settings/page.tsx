@@ -12,7 +12,7 @@ export default async function SettingsPage() {
     <div className="mx-auto max-w-3xl space-y-8">
       <PageHeader
         title="Settings"
-        description="Configure the worker routine triggers the HUD fires on demand. Tokens are stored securely and never shown again — leave a token blank to keep the current one."
+        description="Set up each worker routine — copy its paste-ready prompt and connectors into the Claude web app — and wire the dashboard triggers the HUD fires on demand. Tokens are stored securely and never shown again — leave a token blank to keep the current one."
       />
       <RoutineSetupGuide knovoApiBase={settings.knovoApiBase} />
       <RoutineConfigForm settings={settings} />
