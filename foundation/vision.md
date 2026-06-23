@@ -46,16 +46,29 @@ artifacts are **server-rendered with clean, stable URLs and embedded structured 
 requirement that flows directly from this vision, and it shapes the rendering strategy in
 `technical-architecture.md`.
 
-## North star (future, owner-directed) — a multi-tenant AI Blog-as-a-Service
+## North star (future, owner-directed) — GemBlog, a multi-tenant AI Blog-as-a-Service
 *(Recorded 2026-06-23. Vision, not current scope — see the scope-wall note below.)*
 
-Knovo's engine — a governed API + a slot-schema renderer + an editorial team of Claude routine
-workers coordinated through a **worker-harness repo** (`worker-harness.md`) — is not specific to
-molecular science. The long-term direction is a **domain-agnostic, multi-tenant "AI
-Blog-as-a-Service"** in which **Knovo is the science showcase tenant** and each domain/niche is a
-**template**: its own shared environment (allowlist + env), connector set, source vocabulary, and a
-constitution + per-worker role modules. A new operator picks (or forks) a domain template, points
-their routines at their own harness repo, and runs their own source-grounded, human-gated library.
+The platform this engine becomes is **GemBlog** (domain **gemblog.co**) — a **domain-agnostic,
+multi-tenant "AI Blog-as-a-Service"** in which **Knovo is the molecular-science showcase tenant**.
+The engine — a governed API + a slot-schema renderer + an editorial team of Claude routine workers
+coordinated through a **worker-harness repo** (`worker-harness.md`) — is not specific to molecular
+science. A new operator picks (or forks) a **domain** and runs their own source-grounded,
+human-gated library at `‹name›.gemblog.co` (or a custom domain).
+
+**Universal core + domain kits.** The generic spine — the slot/renderer/governance core (stage /
+panel / controls / caption shape, the chart + diagram stages, panels, the kind-dispatching renderer,
+the design system, and the whole validate→audit→publish-gate→soft-delete→version machinery) — is
+**domain-neutral and shared by every tenant**. Each niche adds a **domain kit**: its domain-specific
+**stage kinds** (Knovo's molecular kit = the `molecular3d` viewer + PDB selection grammar), its
+**source vocabulary** (Knovo = PDB/ChEMBL/PubMed/bioRxiv), and its **voice/niche** conventions. The
+provenance *contract* (≥1 stable, verifiable primary source) is universal; the source *registry* is
+per-kit. Adding a kit is a reviewed schema version-bump + migration, never a renderer rewrite
+(design: `artifact-schema.md` → "Generalization").
+
+A tenant's **domain template** unifies three things: a **domain kit** (render/sources/schema) + a
+**harness repo** (constitution + per-worker prompts) + a **shared environment** (connectors +
+allowlist + env). The multi-tenant north star is "a registry of these templates."
 
 Two capabilities make a template both reusable and customizable:
 - **Modular / parametric prompts** — a worker's instructions are *composed*
@@ -65,11 +78,16 @@ Two capabilities make a template both reusable and customizable:
 - **A four-agent editorial team** — Scout / Editor / Keeper / **Supervisor**, the Supervisor
   coordinating the shared harness (`worker-harness.md` §5).
 
+**The wedge, productized:** an autonomous, source-grounded editorial team that runs your niche blog
+— offered freemium (free `‹name›.gemblog.co` + metered generation; paid custom domains, higher
+quotas, the autonomous Supervisor cadence). Model: `monetization.md`. Gated by Decision 7.
+
 **Scope-wall.** This is the deliberate, owner-directed *direction of travel* — **not** current
 scope. The narrow-niche invariant (`DECISIONS.md` Decision 1) **still governs the Knovo tenant**;
-nothing multi-tenant, no parametric composer, and no template registry is built until its roadmap
-phase is pulled (`roadmap.md` → "Platform horizon"). The decisions it will eventually touch are
-flagged in the `DECISIONS.md` vision note so they are amended consciously, at phase start.
+nothing multi-tenant, no domain kit, no parametric composer, no freemium, and no template registry
+is built until its roadmap phase is pulled (`roadmap.md` → "Platform horizon"). The brand rename
+(Knovo → GemBlog) and the decisions this all eventually touches are flagged in the `DECISIONS.md`
+vision note so they are amended consciously, at phase start.
 
 ## Open questions
 - Multi-tenant / Blog-as-a-Service north star: when (if ever) to pull it from vision into a phase,

@@ -142,11 +142,13 @@ composer's **default** params reproduce the canonical block in `docs/routines.md
 this doc.
 
 ## 8. Template-readiness → the multi-tenant bridge (future)
-A harness repo is exactly the per-tenant/per-domain **template instance**: a shared environment
-(allowlist + env), a connector set, and a constitution + role modules. The multi-tenant north star
-(`vision.md`) is then "a registry of these templates": Knovo's molecular-science harness is the
-showcase template; new domains add their own template (their sources, voice, and slot conventions);
-a tenant **forks the baseline** and selects their repo when configuring routines. Nothing here is
+A harness repo is the per-tenant/per-domain **template instance**. A full template pairs it with a
+**domain kit** (the niche's stage kinds + source vocabulary + voice; `artifact-schema.md` →
+"Generalization") and a **shared environment** (allowlist + env + connector set): *template = harness
++ domain kit + env*. The multi-tenant north star — **GemBlog** (`vision.md`) — is then "a registry of
+these templates": Knovo's molecular-science template is the showcase; new domains add their own
+(their kit + harness + env); a tenant **forks the baseline** and selects their repo when configuring
+routines, running at `‹slug›.gemblog.co` under the freemium model (`monetization.md`). Nothing here is
 built now — it is recorded so the harness is shaped to make it possible.
 
 ## Open questions
