@@ -1,9 +1,19 @@
 name: CI
 
+# Minimal merge gate to conserve private-repo Actions minutes: runs only on PRs to main,
+# skips docs-only changes, and cancels superseded runs. Local verification is the primary gate.
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "foundation/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
