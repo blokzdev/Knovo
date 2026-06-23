@@ -17,17 +17,28 @@ database credential. Three workers:
 - **Editor** — iterate / enhance / curate / publish, on the admin's direction.
 - **Keeper** — keep the published library healthy: re-verify sources, flag drift to the admin.
 
-## Shared environment (set on each routine's cloud environment)
-Create one reusable cloud environment named **"Knovo"** and attach it to all three routines.
-Step-by-step in **`SETUP.md` §7a** (Claude Code on the web). In summary:
-- **Network access:** Custom — allow `api.knovo.ai`, `data.rcsb.org`, `files.rcsb.org`
-  (MCP connector traffic is routed through Anthropic and needs no allowlisting).
-- **Environment variables:**
-  - `KNOVO_API_BASE = https://api.knovo.ai`
-  - `KNOVO_WORKER_TOKEN_SCOUT` (Scout) / `KNOVO_WORKER_TOKEN_EDITOR` (Editor) /
-    `KNOVO_WORKER_TOKEN_KEEPER` (Keeper) — each the same secret value configured in the Knovo app
-    env (see `.env.example`, `SETUP.md`).
-- **Repository:** select **Knovo** (for skills/context; workers do not push code).
+## Shared environment + per-routine setup (Claude web app)
+Create **one** reusable cloud environment named **"Knovo"** and attach it to all three routines.
+The fields below match the **New cloud environment** dialog; full walkthrough in **`SETUP.md` §7**.
+- **Name:** `Knovo`.
+- **Network access:** **Custom** → in **Allowed domains** list `api.knovo.ai`, `data.rcsb.org`,
+  `files.rcsb.org` (leave *"include default package managers"* unchecked — workers install nothing).
+  MCP connector traffic is routed through Anthropic and needs no allowlisting. (**Full** also works,
+  looser.)
+- **Environment variables** (`.env` format, one `KEY=value` per line, no quotes):
+  - `KNOVO_API_BASE=https://api.knovo.ai`
+  - `KNOVO_WORKER_TOKEN_SCOUT` / `KNOVO_WORKER_TOKEN_EDITOR` / `KNOVO_WORKER_TOKEN_KEEPER` — each the
+    same secret value configured in the Knovo app env (see `.env.example`, `SETUP.md`).
+  - **Caveat:** Claude has no separate secrets store, so the bearer tokens live here and are visible
+    to anyone who can edit this environment (single-admin → just the owner). Tokens are verb-scoped +
+    revocable; rotate if the environment is ever shared. Never put the Supabase service-role key here.
+- **Setup script:** *optional, not required* — workers only `curl` the API + use connectors (both
+  available by default). An optional non-fatal probe (`curl -sS "$KNOVO_API_BASE" || true`) confirms
+  the allowlist is right.
+
+Then **per routine** (not on the environment): select the **Knovo** environment **and** the **Knovo**
+repository (for skills/context; workers do not push code), set its connectors + triggers, paste its
+paste-ready prompt, and mint an **API** trigger → paste the URL + token into `/admin/settings`.
 
 The API verb-scopes each token: **Scout** = `dedup`, `create`; **Editor** = `dedup`, `queue`,
 `create`, `update`, `status`, `resolve`, `series`, `flag`; **Keeper** = `targets`, `update`,
