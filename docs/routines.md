@@ -5,6 +5,10 @@ Claude web app. Whenever the **schema**, **connectors**, or **generation flow** 
 regenerate this file **and** the paste-ready blocks below, then update the routines (rule
 enforced by `CLAUDE.md`).
 
+> The per-worker blocks below are also surfaced in the admin dashboard (`/admin/settings`) for
+> in-app copy, via the typed mirror `lib/workers/routines.ts` — kept byte-for-byte in lockstep with
+> this file by `lib/workers/routines.test.ts`. Update both in the same change.
+
 *(Rewritten 2026-06-22 for the governed-autonomy pivot; expanded to three workers.)* Workers
 run in Claude (not Vercel) and reach Knovo data **only through the governed Knovo API**
 (`api.knovo.ai`) using a per-worker bearer token — **never** the Supabase connector or any

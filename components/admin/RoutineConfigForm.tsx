@@ -20,8 +20,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { DispatchButton } from "./DispatchButton";
+import { WorkerRoutineGuide, WORKER_ICONS } from "./WorkerRoutineGuide";
 
 const SOURCE_META: Record<ConfigSource, { label: string; cls: string }> = {
   db: { label: "Configured", cls: "border-success/30 bg-success/10 text-success" },
@@ -29,15 +31,51 @@ const SOURCE_META: Record<ConfigSource, { label: string; cls: string }> = {
   none: { label: "Not set", cls: "border-border bg-muted text-muted-foreground" },
 };
 
+// Status dot on each tab: at-a-glance "which routines are wired" (db = configured, env = env
+// fallback, none = not set).
+const SOURCE_DOT: Record<ConfigSource, string> = {
+  db: "bg-success",
+  env: "bg-warning",
+  none: "bg-muted-foreground/40",
+};
+
+// One tab per worker. Each tab is a complete control panel: how to set up the routine (guidance +
+// copyable system prompt) and how to wire its dashboard trigger (fire URL + token).
 export function RoutineConfigForm({ settings }: { settings: RoutineSettings }) {
   return (
     <div className="space-y-6">
       <GlobalCard knovoApiBase={settings.knovoApiBase} />
-      <div className="space-y-4">
-        <h2 className="text-sm font-semibold text-foreground">Routine triggers</h2>
-        {settings.routines.map((r) => (
-          <RoutineCard key={r.worker} setting={r} />
-        ))}
+      <div className="space-y-3">
+        <div className="space-y-1">
+          <h2 className="text-sm font-semibold text-foreground">Worker routines</h2>
+          <p className="text-xs text-muted-foreground">
+            Set up each routine in the Claude web app (copy its prompt below), then wire its dashboard
+            trigger so the HUD can fire it on demand.
+          </p>
+        </div>
+        <Tabs defaultValue={settings.routines[0]?.worker ?? "scout"}>
+          <TabsList className="grid h-auto w-full grid-cols-3">
+            {settings.routines.map((r) => {
+              const Icon = WORKER_ICONS[r.worker];
+              return (
+                <TabsTrigger key={r.worker} value={r.worker} className="gap-1.5">
+                  <span
+                    className={cn("h-1.5 w-1.5 shrink-0 rounded-full", SOURCE_DOT[r.source])}
+                    title={SOURCE_META[r.source].label}
+                  />
+                  <Icon className="hidden h-4 w-4 shrink-0 sm:block" />
+                  {WORKER_META[r.worker].label}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          {settings.routines.map((r) => (
+            <TabsContent key={r.worker} value={r.worker} className="space-y-4">
+              <WorkerRoutineGuide worker={r.worker} />
+              <RoutineCard setting={r} />
+            </TabsContent>
+          ))}
+        </Tabs>
       </div>
     </div>
   );
@@ -135,8 +173,10 @@ function RoutineCard({ setting }: { setting: RoutineSetting }) {
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0">
         <div className="space-y-1.5">
-          <CardTitle className="text-base">{meta.label}</CardTitle>
-          <CardDescription>{meta.blurb}</CardDescription>
+          <CardTitle className="text-base">Dashboard trigger</CardTitle>
+          <CardDescription>
+            Fire URL + token the HUD uses to run {meta.label} on demand (Test / Run now).
+          </CardDescription>
         </div>
         <Badge variant="outline" className={cn("shrink-0", source.cls)}>
           {source.label}
