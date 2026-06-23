@@ -55,7 +55,9 @@ collapsing to the 4 status tokens.
 - Respect `prefers-reduced-motion` (global rule in `globals.css`). Maintain WCAG-AA contrast in both
   themes. Focus-visible rings (brand) everywhere; Radix provides focus trap/escape for Sheet/Dialog.
 
-## Out of scope (roadmap follow-on)
-Auth/onboarding, a deep `/legal/*` redesign, and transactional email templates adopt these tokens in
-a later design pass (see `foundation/roadmap.md` Phase 3). tldraw `diagram` (PR4) and immersive mode
-(PR5) are renderer work, tracked in `docs/renderer-hardening.md`.
+## Follow-on (beyond the initial elevation)
+**PR4** extends these tokens to the **legal/MDX prose** (`mdx-components.tsx` — dark-mode redesign),
+**branded global states** (`app/{not-found,error,global-error,loading}.tsx` + a reader skeleton), and
+**auth/account** polish. Still out of scope: **transactional email templates** (a separate feature PR
+— needs an email provider + secret + send path) and a richer landing / `/about`. tldraw `diagram`
+(PR5) and immersive mode (PR6) are renderer work, tracked in `docs/renderer-hardening.md`.

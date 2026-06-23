@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Compass } from "lucide-react";
 import { ArtifactCard } from "@/components/site/ArtifactCard";
+import { EmptyState, PageHeader } from "@/components/common/layout";
+import { Button } from "@/components/ui/button";
 import { listBookmarkedArtifacts } from "@/lib/reader/queries";
 import { getViewer } from "@/lib/reader/viewer";
 
@@ -15,11 +18,9 @@ export default async function BookmarksPage() {
 
   if (!viewer) {
     return (
-      <main className="mx-auto max-w-5xl px-6 py-16">
-        <h1 className="text-2xl font-semibold tracking-tight">My bookmarks</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sign in to save explainers and find them here.
-        </p>
+      <main className="mx-auto max-w-5xl px-6 py-12">
+        <PageHeader title="My bookmarks" description="Sign in to save explainers and find them here." />
+        <EmptyState className="mt-8">Sign in from the account menu to start saving explainers.</EmptyState>
       </main>
     );
   }
@@ -28,15 +29,14 @@ export default async function BookmarksPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">My bookmarks</h1>
+      <PageHeader title="My bookmarks" description="Explainers you've saved." />
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          Nothing saved yet. Browse the{" "}
-          <Link href="/explore" className="underline hover:text-foreground">
-            library
-          </Link>{" "}
-          and hit Save.
-        </p>
+        <EmptyState className="mt-8" icon={<Compass className="h-5 w-5" />}>
+          <p>Nothing saved yet.</p>
+          <Button asChild variant="outline" size="sm" className="mt-3">
+            <Link href="/explore">Browse the library</Link>
+          </Button>
+        </EmptyState>
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((a) => (
