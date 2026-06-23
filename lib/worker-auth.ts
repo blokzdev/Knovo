@@ -63,7 +63,7 @@ export function authenticateWorker(req: Request): Worker | null {
   const m = header.match(/^Bearer\s+(.+)$/i);
   if (!m) return null;
   const presented = m[1].trim();
-  for (const id of ["scout", "editor"] as const) {
+  for (const id of ["scout", "editor", "keeper"] as const) {
     const expected = tokenFor(id);
     if (expected && expected.length > 0 && safeEqual(presented, expected)) {
       return { id, can: (verb: Verb) => VERBS[id].has(verb) };
