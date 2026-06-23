@@ -14,12 +14,15 @@ database credential. Three workers:
 - **Keeper** — keep the published library healthy: re-verify sources, flag drift to the admin.
 
 ## Shared environment (set on each routine's cloud environment)
+Create one reusable cloud environment named **"Knovo"** and attach it to all three routines.
+Step-by-step in **`SETUP.md` §7a** (Claude Code on the web). In summary:
 - **Network access:** Custom — allow `api.knovo.ai`, `data.rcsb.org`, `files.rcsb.org`
   (MCP connector traffic is routed through Anthropic and needs no allowlisting).
 - **Environment variables:**
   - `KNOVO_API_BASE = https://api.knovo.ai`
-  - `KNOVO_WORKER_TOKEN_SCOUT` (Scout) / `KNOVO_WORKER_TOKEN_EDITOR` (Editor) — the same secret
-    value configured in the Knovo app env (see `.env.example`, `SETUP.md`).
+  - `KNOVO_WORKER_TOKEN_SCOUT` (Scout) / `KNOVO_WORKER_TOKEN_EDITOR` (Editor) /
+    `KNOVO_WORKER_TOKEN_KEEPER` (Keeper) — each the same secret value configured in the Knovo app
+    env (see `.env.example`, `SETUP.md`).
 - **Repository:** select **Knovo** (for skills/context; workers do not push code).
 
 The API verb-scopes each token: **Scout** = `dedup`, `create`; **Editor** = `dedup`, `queue`,

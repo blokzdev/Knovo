@@ -163,6 +163,28 @@ const CHART_DEMO: Demo = {
 const DEMOS: Demo[] = [STRUCTURE_DEMO, CHART_DEMO];
 
 async function main() {
+  // --print: validate each demo against the schema and emit it as JSON; no DB access. Useful as a
+  // dry run (and to derive the exact rows when seeding by other means).
+  if (process.argv.includes("--print")) {
+    for (const demo of DEMOS) {
+      const parsed = safeParseArtifactDoc(CURRENT_SCHEMA_VERSION, demo.doc);
+      console.log(
+        JSON.stringify({
+          slug: demo.slug,
+          valid: parsed.success,
+          error: parsed.success
+            ? null
+            : typeof parsed.error === "string"
+              ? parsed.error
+              : parsed.error.issues,
+          doc: demo.doc,
+          sources: demo.sources,
+        }),
+      );
+    }
+    return;
+  }
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
