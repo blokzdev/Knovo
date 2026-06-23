@@ -115,6 +115,24 @@ the narrow-niche invariant (Decision 1) keeps governing the Knovo tenant until t
 begins (the `DECISIONS.md` vision notes flag which decisions each amends). Design lives in
 `foundation/worker-harness.md` (harness), `foundation/artifact-schema.md` → "Generalization"
 (design kits), and `foundation/monetization.md` (freemium).
+
+**Sequencing & dependencies (read first).** **None of M1–M6 is started** — the project is at
+**Phase 1 (code-complete, operationally unrun)**, and the whole Platform horizon is vision until
+explicitly pulled. (These are **not** the completed renderer-hardening **PR0–PR3** — a separate,
+finished Phase 1b-follow sequence in `docs/renderer-hardening.md`; don't conflate the two
+numberings.) The flat M1..M6 list hides that the milestones are **three semi-independent tracks**:
+- **Coordination — M1 → M2 → M3** (harness baseline → Supervisor/read-write → parametric prompts).
+  **Strictly ordered:** M3's composer needs the M1/M2 harness substrate — so **M1–M3 before M4 is
+  the correct default.**
+- **Generalization — M4** (universal core + domain kits). The **most independent** track — it
+  touches the renderer/schema, not worker coordination, so it is **reorderable** and can run as an
+  early standalone spike to prove the universal-core thesis.
+- **Tenancy + money — M5 → M6** (multi-tenant data model + rebrand → freemium); sits on top of all
+  the above.
+
+A **live second-domain tenant needs M3 + M4 + M5 together** (a kit alone ≠ a tenant). **Gate
+(held):** pull *none* of M1–M6 until the Knovo tenant is validated (Phase 2) — the operational
+Knovo loop + validation come first.
 - **M1 — Harness baseline (read-mostly).** Publish/fork the worker-harness repo; workers *read* the
   shared constitution + their subfolder; no repo writes yet.
 - **M2 — Read-write coordination + Supervisor.** Per-worker subfolder writes; the 4th **Supervisor**
@@ -143,4 +161,5 @@ explicitly pulled from the backlog.
 - What audience signal counts as "validated" before considering monetization. Trigger:
   first sustained traffic.
 - Platform horizon: when (if ever) to pull M1–M6 from vision into a real phase, and in what
-  order relative to Phase 2/3. Trigger: the Knovo tenant is validated and a second domain is wanted.
+  order relative to Phase 2/3 (see "Sequencing & dependencies" above for the track structure and the
+  held gate). Trigger: the Knovo tenant is validated and a second domain is wanted.
