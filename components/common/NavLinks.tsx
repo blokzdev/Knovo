@@ -2,14 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { isActivePath, type NavLink } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
-export type NavLink = { href: string; label: string; exact?: boolean };
-
-export function isActivePath(pathname: string, link: NavLink): boolean {
-  if (link.exact) return pathname === link.href;
-  return pathname === link.href || pathname.startsWith(`${link.href}/`);
-}
+export type { NavLink };
 
 // Data-driven nav, shared by the admin + public headers and the mobile drawer. Active link is
 // brand-tinted with aria-current. `orientation="vertical"` + larger tap targets for the drawer.

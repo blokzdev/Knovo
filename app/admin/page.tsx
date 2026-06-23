@@ -5,7 +5,7 @@ import { StatusBadge } from "@/components/admin/StatusBadge";
 import { WorkersPanel } from "@/components/admin/WorkersPanel";
 import { STATUS_ORDER, STATUS_META, SEVERITY_CLS, type Status } from "@/lib/admin/labels";
 import { EmptyState, PageHeader, SectionHeading, StatCard } from "@/components/common/layout";
-import { cn } from "@/lib/utils";
+import { cn, focusRing } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -88,7 +88,10 @@ export default async function QueuePage() {
                 <li key={a.id}>
                   <Link
                     href={`/admin/a/${a.id}`}
-                    className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-foreground/20"
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-foreground/20",
+                      focusRing,
+                    )}
                   >
                     <StatusBadge status={a.status} />
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">{a.title}</span>
@@ -112,7 +115,10 @@ export default async function QueuePage() {
                 <li key={f.id}>
                   <Link
                     href={`/admin/a/${f.artifact!.id}`}
-                    className="block rounded-lg border border-border bg-card p-3 transition-colors hover:border-foreground/20"
+                    className={cn(
+                      "block rounded-lg border border-border bg-card p-3 transition-colors hover:border-foreground/20",
+                      focusRing,
+                    )}
                   >
                     <div className="flex items-center gap-2">
                       {f.options?.severity && (

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Avatar } from "@/components/common/Avatar";
+import { focusRing } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { editComment, deleteComment } from "@/lib/reader/actions";
@@ -85,10 +86,10 @@ export function CommentItem({
 
         {isOwn && !editing && (
           <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
-            <button onClick={() => setEditing(true)} className="hover:text-foreground">
+            <button onClick={() => setEditing(true)} className={`rounded-sm hover:text-foreground ${focusRing}`}>
               Edit
             </button>
-            <button onClick={remove} disabled={pending} className="hover:text-destructive">
+            <button onClick={remove} disabled={pending} className={`rounded-sm hover:text-destructive ${focusRing}`}>
               Delete
             </button>
           </div>

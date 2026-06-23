@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { STATUS_ORDER, STATUS_META, type Status } from "@/lib/admin/labels";
 import { PageHeader } from "@/components/common/layout";
-import { cn } from "@/lib/utils";
+import { cn, focusRing } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -34,6 +34,7 @@ export default async function LibraryPage({
         href={href}
         className={cn(
           "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+          focusRing,
           active ? "border-foreground bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:border-foreground/20",
         )}
       >
@@ -71,7 +72,10 @@ export default async function LibraryPage({
           <ul className="divide-y divide-border">
             {items.map((a) => (
               <li key={a.id}>
-                <Link href={`/admin/a/${a.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-accent">
+                <Link
+                  href={`/admin/a/${a.id}`}
+                  className={cn("flex items-center gap-3 px-4 py-3 hover:bg-accent", focusRing)}
+                >
                   <StatusBadge status={a.status} />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{a.title}</span>
                   {a.deleted_at && <span className="text-xs text-destructive">trashed</span>}

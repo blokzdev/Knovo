@@ -4,7 +4,7 @@ import { KnovoWordmark } from "@/components/Logo";
 // Shared shell for /legal/* pages: brand header, prose container, back link.
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-card">
+    <div className="min-h-screen bg-background">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <KnovoWordmark />
