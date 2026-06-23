@@ -9,7 +9,9 @@ import { CopyButton } from "@/components/ui/copy-button";
 // Claude web app — name, connectors, triggers, verb scope, env token — plus the paste-ready system
 // prompt (copyable) behind a disclosure. All text is sourced from lib/workers/routines.ts, which is
 // drift-guarded against docs/routines.md. Composes into the client settings tabs.
-const ICONS: Record<WorkerId, LucideIcon> = {
+// Per-worker icon (also reused by the settings tabs). Kept out of the data registry so it stays
+// pure/serializable and drift-testable.
+export const WORKER_ICONS: Record<WorkerId, LucideIcon> = {
   scout: Telescope,
   editor: PencilLine,
   keeper: ShieldCheck,
@@ -17,7 +19,7 @@ const ICONS: Record<WorkerId, LucideIcon> = {
 
 export function WorkerRoutineGuide({ worker }: { worker: WorkerId }) {
   const w = WORKER_ROUTINES[worker];
-  const Icon = ICONS[worker];
+  const Icon = WORKER_ICONS[worker];
 
   return (
     <section className="space-y-4 rounded-xl border border-border bg-card p-4 sm:p-5">
