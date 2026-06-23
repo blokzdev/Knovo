@@ -1,29 +1,14 @@
 import { AlertTriangle } from "lucide-react";
-import { safeParseArtifactDoc, type ArtifactDocV1 } from "@/lib/artifact-schema";
+import { safeParseArtifactDoc } from "@/lib/artifact-schema";
 import { InteractiveStage } from "./InteractiveStage";
+import { CaptionList } from "./CaptionList";
 import { PanelBlock } from "./panels";
 import { ProvenanceFooter, type ProvenanceSource } from "./ProvenanceFooter";
 
-type Caption = ArtifactDocV1["captions"][number];
-
-function CaptionList({ captions }: { captions: Caption[] }) {
-  if (captions.length === 0) return null;
-  return (
-    <ul className="space-y-1.5">
-      {captions.map((c) => (
-        <li key={c.id} className="flex gap-2 text-xs leading-5 text-muted-foreground">
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
-          <span>{c.text}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 // The single, shared artifact renderer. Validates the slot document on read, then renders the
 // stage (interactive), panels, captions, and the auto provenance footer. Reused as the admin
-// preview now and on public pages later (no admin coupling). Responsive portrait + landscape;
-// the immersive mode is a follow-up.
+// preview now and on public pages later (no admin coupling). Responsive portrait + landscape; the
+// stage can expand to an immersive overlay (owned by InteractiveStage — see its docs).
 export function ArtifactRenderer({
   doc,
   schemaVersion,
@@ -69,7 +54,14 @@ export function ArtifactRenderer({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="min-w-0 space-y-3">
-          <InteractiveStage stage={d.stage} controls={d.controls} />
+          <InteractiveStage
+            stage={d.stage}
+            controls={d.controls}
+            title={d.title}
+            panels={d.panels}
+            captions={d.captions}
+            sources={sources}
+          />
           <CaptionList captions={stageCaptions} />
         </div>
 

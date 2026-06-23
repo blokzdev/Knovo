@@ -17,6 +17,7 @@ import {
 } from "recharts";
 import type { ArtifactDocV1 } from "@/lib/artifact-schema";
 import { useThemeColors } from "@/lib/use-theme-colors";
+import { cn } from "@/lib/utils";
 
 type ChartStageT = Extract<ArtifactDocV1["stage"], { kind: "chart" }>;
 
@@ -26,11 +27,21 @@ const PALETTE = ["#6366f1", "#06b6d4", "#f59e0b", "#10b981", "#f43f5e", "#a855f7
 // y-log toggle is for positive metrics like IC50 — data positivity is the routine's responsibility).
 const LOG_DOMAIN = ["auto", "auto"] as ["auto", "auto"];
 
-export function ChartStage({ stage, yLog }: { stage: ChartStageT; yLog: boolean }) {
+export function ChartStage({
+  stage,
+  yLog,
+  fill = false,
+}: {
+  stage: ChartStageT;
+  yLog: boolean;
+  fill?: boolean;
+}) {
   // Avoid SSR/responsive width warnings — render the chart after mount.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const { grid, axis } = useThemeColors();
+  // In immersive mode the stage fills its flex container; otherwise it's a fluid clamped height.
+  const heightClass = fill ? "h-full" : "h-[clamp(260px,40vh,360px)]";
 
   const xKey = stage.axes.x;
   const yKey = stage.axes.y;
@@ -45,11 +56,11 @@ export function ChartStage({ stage, yLog }: { stage: ChartStageT; yLog: boolean 
   const legendStyle = { fontSize: 12, color: "hsl(var(--muted-foreground))" };
 
   if (!mounted) {
-    return <div className="h-[clamp(260px,40vh,360px)] w-full animate-pulse rounded-lg bg-muted" />;
+    return <div className={cn(heightClass, "w-full animate-pulse rounded-lg bg-muted")} />;
   }
 
   return (
-    <div className="h-[clamp(260px,40vh,360px)] w-full rounded-lg border border-border bg-card p-3">
+    <div className={cn(heightClass, "w-full rounded-lg border border-border bg-card p-3")}>
       <ResponsiveContainer width="100%" height="100%">
         {stage.chartType === "bar" ? (
           <BarChart>
