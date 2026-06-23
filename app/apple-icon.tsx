@@ -3,6 +3,12 @@ import { ImageResponse } from "next/og";
 // Generates a 180x180 PNG of the Knovo mark for iOS home screens — and a
 // convenient downloadable PNG (served at /apple-icon) to upload as the logo in
 // the Google OAuth Branding screen. No native rasterizer needed.
+//
+// Render on the Edge runtime — the canonical runtime for next/og. The edge bundler inlines
+// @vercel/og's font/wasm assets, whereas the Node build path resolves them via fileURLToPath,
+// which throws "Invalid URL" during `next build` static generation on Windows. Edge keeps this
+// route building on every platform and behaves identically in production.
+export const runtime = "edge";
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
@@ -21,7 +27,8 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="
 </svg>`;
 
 export default function AppleIcon() {
-  const src = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+  // btoa (not Buffer) — Buffer is unavailable on the Edge runtime; the SVG is pure ASCII.
+  const src = `data:image/svg+xml;base64,${btoa(svg)}`;
   return new ImageResponse(
     (
       <div style={{ display: "flex", width: "100%", height: "100%" }}>
