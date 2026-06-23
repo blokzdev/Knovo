@@ -4,8 +4,7 @@
 
 @layer base {
   :root {
-    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-      "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+    /* --font-sans / --font-mono are provided by next/font (see app/layout.tsx). */
     --background: 0 0% 100%;
     --foreground: 0 0% 9%;
     --card: 0 0% 100%;
@@ -22,9 +21,19 @@
     --accent-foreground: 0 0% 9%;
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
+    /* Brand accent — indigo/violet, derived from the KnovoMark (junction #A855F7, gradient #312E81). */
+    --brand: 243 75% 58%;
+    --brand-foreground: 0 0% 100%;
+    /* Semantic status colors (used soft as bg-<x>/10 + text-<x>, or solid with -foreground). */
+    --success: 152 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 44%;
+    --info-foreground: 0 0% 100%;
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
-    --ring: 0 0% 63%;
+    --ring: 243 75% 58%;
     --radius: 0.625rem;
   }
 
@@ -45,9 +54,17 @@
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 98%;
+    --brand: 245 83% 74%;
+    --brand-foreground: 244 47% 14%;
+    --success: 152 58% 48%;
+    --success-foreground: 152 40% 10%;
+    --warning: 40 90% 58%;
+    --warning-foreground: 40 50% 10%;
+    --info: 199 85% 60%;
+    --info-foreground: 199 50% 10%;
     --border: 0 0% 18%;
     --input: 0 0% 18%;
-    --ring: 0 0% 45%;
+    --ring: 245 83% 74%;
   }
 }
 
@@ -57,5 +74,17 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Respect reduced-motion globally: neutralize animation/transition for users who ask for it. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

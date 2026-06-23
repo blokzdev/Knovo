@@ -11,7 +11,7 @@ function CaptionList({ captions }: { captions: Caption[] }) {
   return (
     <ul className="space-y-1.5">
       {captions.map((c) => (
-        <li key={c.id} className="flex gap-2 text-xs leading-5 text-neutral-600">
+        <li key={c.id} className="flex gap-2 text-xs leading-5 text-muted-foreground">
           <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-400" />
           <span>{c.text}</span>
         </li>
@@ -42,11 +42,11 @@ export function ArtifactRenderer({
         ? parsed.error
         : parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
     return (
-      <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+      <div className="flex items-start gap-3 rounded-lg border border-warning/30 bg-warning/10 p-4 text-sm text-warning">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
         <div>
           <p className="font-medium">This document doesn&apos;t match the current schema.</p>
-          <p className="mt-1 text-xs text-amber-700">{message}</p>
+          <p className="mt-1 text-xs text-warning/80">{message}</p>
         </div>
       </div>
     );
@@ -62,8 +62,8 @@ export function ArtifactRenderer({
     <div>
       {showHeader && (
         <header className="mb-5">
-          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">{d.title}</h1>
-          <p className="mt-1 text-sm leading-6 text-neutral-600">{d.summary}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{d.title}</h1>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">{d.summary}</p>
         </header>
       )}
 

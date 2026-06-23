@@ -58,7 +58,7 @@ export default async function ArtifactPage({ params }: { params: { slug: string 
       <div className="flex items-center justify-between gap-4">
         <Link
           href="/explore"
-          className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" /> Explore
         </Link>

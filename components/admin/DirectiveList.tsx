@@ -54,7 +54,7 @@ function Item({ artifactId, d }: { artifactId: string; d: DirectiveRow }) {
     <li
       className={cn(
         "rounded-lg border p-3 text-sm",
-        open ? "border-neutral-200 bg-white" : "border-neutral-100 bg-neutral-50 opacity-70",
+        open ? "border-border bg-card" : "border-border bg-muted opacity-70",
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -87,7 +87,7 @@ function Item({ artifactId, d }: { artifactId: string; d: DirectiveRow }) {
           </span>
         )}
       </div>
-      {d.note && <p className="mt-1.5 leading-5 text-neutral-700">{d.note}</p>}
+      {d.note && <p className="mt-1.5 leading-5 text-foreground">{d.note}</p>}
       {open && (
         <div className="mt-2 flex gap-2">
           <Button size="sm" variant="outline" disabled={pending} onClick={() => resolve("addressed")}>

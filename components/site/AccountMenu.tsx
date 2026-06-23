@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import Link from "next/link";
 import { LogIn, LogOut, Bookmark, Shield } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Avatar } from "@/components/common/Avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -45,26 +46,15 @@ export function AccountMenu({ viewer }: { viewer: Viewer | null }) {
     });
 
   const label = viewer.displayName ?? viewer.email ?? "Account";
-  const initial = (label.trim()[0] ?? "?").toUpperCase();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
           aria-label="Account menu"
-          className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 text-sm font-medium text-neutral-700"
+          className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
-          {viewer.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={viewer.avatarUrl}
-              alt=""
-              className="h-full w-full object-cover"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            initial
-          )}
+          <Avatar name={label} src={viewer.avatarUrl} />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

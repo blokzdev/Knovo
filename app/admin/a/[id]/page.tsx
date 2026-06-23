@@ -75,18 +75,18 @@ export default async function ArtifactDetailPage({ params }: { params: { id: str
 
   return (
     <div className="space-y-6">
-      <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-900">
+      <Link href="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-4 w-4" /> Queue
       </Link>
 
       {/* Header + toolbar */}
-      <div className="space-y-4 rounded-xl border border-neutral-200 bg-white p-5">
+      <div className="space-y-4 rounded-xl border border-border bg-card p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <StatusBadge status={artifact.status} />
               {artifact.deleted_at && <span className="text-xs font-medium text-destructive">trashed</span>}
-              <code className="text-xs text-neutral-400">/a/{artifact.slug}</code>
+              <code className="text-xs text-muted-foreground">/a/{artifact.slug}</code>
             </div>
             <h1 className="mt-2 text-xl font-semibold tracking-tight">{artifact.title}</h1>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -107,7 +107,7 @@ export default async function ArtifactDetailPage({ params }: { params: { id: str
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Preview */}
         <div className="lg:col-span-2">
-          <div className="rounded-xl border border-neutral-200 bg-white p-5">
+          <div className="rounded-xl border border-border bg-card p-5">
             <ArtifactRenderer doc={artifact.doc} schemaVersion={artifact.schema_version} sources={sources} />
           </div>
         </div>
@@ -115,7 +115,7 @@ export default async function ArtifactDetailPage({ params }: { params: { id: str
         {/* Direct + history */}
         <div className="space-y-4">
           <div className="space-y-2">
-            <h2 className="text-sm font-semibold text-neutral-700">Direct</h2>
+            <h2 className="text-sm font-semibold text-foreground">Direct</h2>
             <DirectiveComposer artifactId={artifact.id} />
           </div>
 
@@ -142,12 +142,12 @@ export default async function ArtifactDetailPage({ params }: { params: { id: str
               ) : (
                 <ul className="space-y-1.5">
                   {(revisions ?? []).map((r) => (
-                    <li key={r.id} className="rounded-md border border-neutral-200 bg-white px-3 py-2 text-xs">
+                    <li key={r.id} className="rounded-md border border-border bg-card px-3 py-2 text-xs">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-neutral-500">{r.created_by ?? "—"}</span>
-                        <span className="text-neutral-400">{new Date(r.created_at).toLocaleString()}</span>
+                        <span className="font-mono text-muted-foreground">{r.created_by ?? "—"}</span>
+                        <span className="text-muted-foreground">{new Date(r.created_at).toLocaleString()}</span>
                       </div>
-                      {r.note && <p className="mt-1 text-neutral-600">{r.note}</p>}
+                      {r.note && <p className="mt-1 text-muted-foreground">{r.note}</p>}
                     </li>
                   ))}
                 </ul>
@@ -161,9 +161,9 @@ export default async function ArtifactDetailPage({ params }: { params: { id: str
                 <ul className="space-y-1">
                   {(audit ?? []).map((a, i) => (
                     <li key={i} className="flex items-center gap-2 px-1 py-1.5 text-xs">
-                      <span className="font-mono text-neutral-500">{a.actor}</span>
-                      <span className="text-neutral-700">{a.action}</span>
-                      <span className="ml-auto text-neutral-400">{new Date(a.created_at).toLocaleString()}</span>
+                      <span className="font-mono text-muted-foreground">{a.actor}</span>
+                      <span className="text-foreground">{a.action}</span>
+                      <span className="ml-auto text-muted-foreground">{new Date(a.created_at).toLocaleString()}</span>
                     </li>
                   ))}
                 </ul>

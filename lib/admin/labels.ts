@@ -3,16 +3,34 @@ import type { Database } from "@/lib/database.types";
 export type Status = Database["public"]["Enums"]["artifact_status"];
 export type DirectiveAction = Database["public"]["Enums"]["directive_action"];
 
-// Status display: label + a tone class for a colored badge (token-free, fixed palette so the
-// HUD reads at a glance). Order also defines the queue's column order.
+// Status display: label + a tone class for a colored badge. Distinct hues so the HUD reads at a
+// glance, each with a dark-mode variant (soft tint + lighter text). Order = queue column order.
 export const STATUS_META: Record<Status, { label: string; cls: string }> = {
-  draft: { label: "Draft", cls: "bg-neutral-100 text-neutral-700 border-neutral-200" },
-  needs_review: { label: "Needs review", cls: "bg-amber-100 text-amber-800 border-amber-200" },
-  changes_requested: { label: "Changes requested", cls: "bg-orange-100 text-orange-800 border-orange-200" },
-  approved: { label: "Approved", cls: "bg-sky-100 text-sky-800 border-sky-200" },
-  published: { label: "Published", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  rejected: { label: "Rejected", cls: "bg-red-100 text-red-700 border-red-200" },
-  archived: { label: "Archived", cls: "bg-zinc-100 text-zinc-600 border-zinc-200" },
+  draft: { label: "Draft", cls: "border-border bg-muted text-muted-foreground" },
+  needs_review: {
+    label: "Needs review",
+    cls: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
+  },
+  changes_requested: {
+    label: "Changes requested",
+    cls: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/30",
+  },
+  approved: {
+    label: "Approved",
+    cls: "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30",
+  },
+  published: {
+    label: "Published",
+    cls: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+  },
+  rejected: {
+    label: "Rejected",
+    cls: "bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/30",
+  },
+  archived: {
+    label: "Archived",
+    cls: "bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-500/15 dark:text-zinc-300 dark:border-zinc-500/30",
+  },
 };
 
 export const STATUS_ORDER: Status[] = [
@@ -50,9 +68,9 @@ export const COMPOSER_ACTIONS: { value: DirectiveAction | "none"; label: string 
 ];
 
 export const SEVERITY_CLS: Record<string, string> = {
-  info: "bg-sky-100 text-sky-800 border-sky-200",
-  warn: "bg-amber-100 text-amber-800 border-amber-200",
-  critical: "bg-red-100 text-red-700 border-red-200",
+  info: "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/30",
+  warn: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
+  critical: "bg-red-100 text-red-700 border-red-200 dark:bg-red-500/15 dark:text-red-300 dark:border-red-500/30",
 };
 
 export const WORKER_META: Record<

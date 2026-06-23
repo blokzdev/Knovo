@@ -1,21 +1,24 @@
 import Link from "next/link";
 import { KnovoWordmark } from "@/components/Logo";
+import { NavLinks, type NavLink } from "@/components/common/NavLinks";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 
-// Shared chrome for the public site. The right-side `account` slot is filled by the reader
-// account menu in Phase 1d; until then it stays empty.
+const SITE_NAV: NavLink[] = [{ href: "/explore", label: "Explore" }];
+
+// Shared chrome for the public site. The right-side `account` slot is filled by the reader account
+// menu; the theme toggle sits alongside it. (One nav link fits inline at every width, so no drawer.)
 export function SiteHeader({ account }: { account?: React.ReactNode }) {
   return (
-    <header className="sticky top-0 z-20 border-b border-neutral-200 bg-white/80 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center gap-6 px-6 py-3">
+    <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
+      <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:gap-6 sm:px-6">
         <Link href="/" aria-label="Knovo home">
           <KnovoWordmark />
         </Link>
-        <nav className="flex items-center gap-1 text-sm">
-          <Link href="/explore" className="rounded-md px-3 py-1.5 text-neutral-600 hover:bg-neutral-100">
-            Explore
-          </Link>
-        </nav>
-        <div className="ml-auto flex items-center gap-2">{account}</div>
+        <NavLinks links={SITE_NAV} />
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
+          <ThemeToggle />
+          {account}
+        </div>
       </div>
     </header>
   );

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { STATUS_ORDER, STATUS_META, type Status } from "@/lib/admin/labels";
-import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/common/layout";
+import { cn, focusRing } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,8 @@ export default async function LibraryPage({
         href={href}
         className={cn(
           "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-          active ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300",
+          focusRing,
+          active ? "border-foreground bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground hover:border-foreground/20",
         )}
       >
         {label}
@@ -43,36 +45,41 @@ export default async function LibraryPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Library</h1>
-        <form className="flex items-center gap-2" action="/admin/library" method="get">
-          {status && <input type="hidden" name="status" value={status} />}
-          <input
-            name="q"
-            defaultValue={q}
-            placeholder="Search titles…"
-            className="h-9 w-56 rounded-md border border-neutral-200 bg-white px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-        </form>
-      </div>
+      <PageHeader
+        title="Library"
+        actions={
+          <form className="flex items-center gap-2" action="/admin/library" method="get">
+            {status && <input type="hidden" name="status" value={status} />}
+            <input
+              name="q"
+              defaultValue={q}
+              placeholder="Search titles…"
+              className="h-9 w-56 max-w-[60vw] rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </form>
+        }
+      />
 
       <div className="flex flex-wrap gap-2">
         {chip("All")}
         {STATUS_ORDER.map((s) => chip(STATUS_META[s].label, s))}
       </div>
 
-      <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         {items.length === 0 ? (
           <p className="p-8 text-center text-sm text-muted-foreground">No artifacts.</p>
         ) : (
-          <ul className="divide-y divide-neutral-100">
+          <ul className="divide-y divide-border">
             {items.map((a) => (
               <li key={a.id}>
-                <Link href={`/admin/a/${a.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-50">
+                <Link
+                  href={`/admin/a/${a.id}`}
+                  className={cn("flex items-center gap-3 px-4 py-3 hover:bg-accent", focusRing)}
+                >
                   <StatusBadge status={a.status} />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{a.title}</span>
                   {a.deleted_at && <span className="text-xs text-destructive">trashed</span>}
-                  <span className="hidden text-xs text-neutral-400 sm:inline">
+                  <span className="hidden text-xs text-muted-foreground sm:inline">
                     {new Date(a.updated_at).toLocaleDateString()}
                   </span>
                 </Link>

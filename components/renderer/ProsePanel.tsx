@@ -6,15 +6,15 @@ import ReactMarkdown from "react-markdown";
 // plugin — element styles are mapped here, mirroring mdx-components.tsx).
 export function ProsePanel({ content }: { content: string }) {
   return (
-    <div className="text-sm leading-6 text-neutral-700">
+    <div className="text-sm leading-6 text-foreground">
       <ReactMarkdown
         components={{
           p: ({ children }) => <p className="mt-3 first:mt-0">{children}</p>,
           h2: ({ children }) => (
-            <h2 className="mt-5 text-base font-semibold text-neutral-900">{children}</h2>
+            <h2 className="mt-5 text-base font-semibold text-foreground">{children}</h2>
           ),
           h3: ({ children }) => (
-            <h3 className="mt-4 text-sm font-semibold text-neutral-900">{children}</h3>
+            <h3 className="mt-4 text-sm font-semibold text-foreground">{children}</h3>
           ),
           ul: ({ children }) => <ul className="mt-3 list-disc space-y-1 pl-5">{children}</ul>,
           ol: ({ children }) => <ol className="mt-3 list-decimal space-y-1 pl-5">{children}</ol>,
@@ -23,14 +23,14 @@ export function ProsePanel({ content }: { content: string }) {
               href={href}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-indigo-600 hover:underline"
+              className="font-medium text-brand hover:underline"
             >
               {children}
             </a>
           ),
-          strong: ({ children }) => <strong className="font-semibold text-neutral-900">{children}</strong>,
+          strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
           code: ({ children }) => (
-            <code className="rounded bg-neutral-100 px-1 py-0.5 font-mono text-[13px]">{children}</code>
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-[13px]">{children}</code>
           ),
         }}
       >

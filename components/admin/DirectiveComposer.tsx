@@ -42,7 +42,7 @@ export function DirectiveComposer({ artifactId }: { artifactId: string }) {
     });
 
   return (
-    <div className="space-y-3 rounded-lg border border-neutral-200 bg-white p-3">
+    <div className="space-y-3 rounded-lg border border-border bg-card p-3">
       <Textarea
         placeholder="Natural-language instruction — e.g. “Tighten the abstract and verify the IC50 against ChEMBL.”"
         value={note}
@@ -51,7 +51,7 @@ export function DirectiveComposer({ artifactId }: { artifactId: string }) {
       />
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <Label className="text-xs text-neutral-500">Action</Label>
+          <Label className="text-xs text-muted-foreground">Action</Label>
           <Select value={action} onValueChange={(v) => setAction(v as DirectiveAction | "none")}>
             <SelectTrigger className="h-8 w-[220px] text-xs">
               <SelectValue />
@@ -67,7 +67,7 @@ export function DirectiveComposer({ artifactId }: { artifactId: string }) {
         </div>
         <div className="flex items-center gap-2">
           <Switch id="publish-after" checked={publishAfter} onCheckedChange={setPublishAfter} />
-          <Label htmlFor="publish-after" className="text-xs text-neutral-600">
+          <Label htmlFor="publish-after" className="text-xs text-muted-foreground">
             …and publish when done
           </Label>
         </div>

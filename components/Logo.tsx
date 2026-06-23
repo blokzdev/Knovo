@@ -52,7 +52,7 @@ export function KnovoWordmark({ className = "" }: { className?: string }) {
   return (
     <Link href="/" className={`inline-flex items-center gap-2 ${className}`}>
       <KnovoMark className="h-7 w-7" />
-      <span className="text-lg font-semibold tracking-tight text-neutral-900">Knovo</span>
+      <span className="text-lg font-semibold tracking-tight text-foreground">Knovo</span>
     </Link>
   );
 }

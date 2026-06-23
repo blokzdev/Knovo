@@ -7,6 +7,7 @@ import { saveAppSetting, saveRoutineConfig } from "@/lib/admin/actions";
 import { isAllowedFireUrl, FIRE_URL_REQUIREMENT } from "@/lib/routine-url";
 import { WORKER_META } from "@/lib/admin/labels";
 import type { ConfigSource, RoutineSetting, RoutineSettings } from "@/lib/admin/settings";
+import { FormField } from "@/components/common/FormField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,9 +24,9 @@ import { cn } from "@/lib/utils";
 import { DispatchButton } from "./DispatchButton";
 
 const SOURCE_META: Record<ConfigSource, { label: string; cls: string }> = {
-  db: { label: "Configured", cls: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  env: { label: "Env fallback", cls: "bg-amber-100 text-amber-800 border-amber-200" },
-  none: { label: "Not set", cls: "bg-neutral-100 text-neutral-600 border-neutral-200" },
+  db: { label: "Configured", cls: "border-success/30 bg-success/10 text-success" },
+  env: { label: "Env fallback", cls: "border-warning/30 bg-warning/10 text-warning" },
+  none: { label: "Not set", cls: "border-border bg-muted text-muted-foreground" },
 };
 
 export function RoutineConfigForm({ settings }: { settings: RoutineSettings }) {
@@ -33,7 +34,7 @@ export function RoutineConfigForm({ settings }: { settings: RoutineSettings }) {
     <div className="space-y-6">
       <GlobalCard knovoApiBase={settings.knovoApiBase} />
       <div className="space-y-4">
-        <h2 className="text-sm font-semibold text-neutral-700">Routine triggers</h2>
+        <h2 className="text-sm font-semibold text-foreground">Routine triggers</h2>
         {settings.routines.map((r) => (
           <RoutineCard key={r.worker} setting={r} />
         ))}
@@ -63,15 +64,14 @@ function GlobalCard({ knovoApiBase }: { knovoApiBase: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Label htmlFor="knovo-api-base">KNOVO_API_BASE</Label>
-        <Input
-          id="knovo-api-base"
-          type="url"
-          placeholder="https://api.knovo.ai"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          className="mt-1.5"
-        />
+        <FormField id="knovo-api-base" label="KNOVO_API_BASE">
+          <Input
+            type="url"
+            placeholder="https://api.knovo.ai"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+          />
+        </FormField>
       </CardContent>
       <CardFooter className="justify-end">
         <Button type="button" size="sm" onClick={save} disabled={pending}>
@@ -143,26 +143,17 @@ function RoutineCard({ setting }: { setting: RoutineSetting }) {
         </Badge>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div>
-          <Label htmlFor={urlId}>Fire URL</Label>
+        <FormField id={urlId} label="Fire URL" error={urlError}>
           <Input
-            id={urlId}
             type="url"
             inputMode="url"
             placeholder="https://…/fire"
             value={fireUrl}
             onChange={(e) => setFireUrl(e.target.value)}
             onBlur={(e) => checkUrl(e.target.value)}
-            aria-invalid={!!urlError}
-            aria-describedby={urlError ? `${urlId}-err` : undefined}
-            className={cn("mt-1.5", urlError && "border-destructive focus-visible:ring-destructive")}
+            className={cn(urlError && "border-destructive focus-visible:ring-destructive")}
           />
-          {urlError && (
-            <p id={`${urlId}-err`} className="mt-1 text-xs text-destructive">
-              {urlError}
-            </p>
-          )}
-        </div>
+        </FormField>
 
         <div>
           <Label htmlFor={tokenId}>Trigger token</Label>
@@ -193,7 +184,7 @@ function RoutineCard({ setting }: { setting: RoutineSetting }) {
           </div>
           <p className="mt-1 text-xs text-muted-foreground">Leave blank to keep the current token.</p>
           {tokenWarn && (
-            <p className="mt-1 text-xs text-amber-600">
+            <p className="mt-1 text-xs text-warning">
               Tokens usually start with <span className="font-mono">sk-ant-oat01-</span> — double-check this value.
             </p>
           )}
