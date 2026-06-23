@@ -46,7 +46,9 @@ Discriminated union on `kind`:
   ```jsonc
   { "id": "stage", "kind": "chart", "chartType": "bar",       // line | bar | scatter
     "axes": { "x": "target", "y": "IC50 (nM)" },
-    "series": [ { "name": "compound X", "data": [ … ] } ] }
+    // each data point is keyed by axes.x and axes.y (the renderer reads those exact keys):
+    "series": [ { "name": "compound X",
+      "data": [ { "target": "Y", "IC50 (nM)": 8 }, { "target": "Z", "IC50 (nM)": 470 } ] } ] }
   ```
 
 (Charts may also appear as panels; the *stage* is the single hero surface. v1 allows one
@@ -70,7 +72,39 @@ Each control names the **stage** it drives and the **parameter** it sets.
   "options": ["cartoon","surface","sticks"], "default": "cartoon" }
 ```
 `kind ∈ toggle | slider | select | stepper`. **`control.target` must reference a stage id**;
-**`param`** must name a stage-kind-appropriate parameter (validated per kind).
+**`param`** must name a stage-kind-appropriate parameter (below).
+
+#### Param grammar (per stage kind) — v1
+`param` is a dotted-path string; the renderer holds a flat map keyed by the exact `param`, and
+each declared control's `default` seeds it (over a stage-derived floor). Unknown params are
+carried but ignored, so the vocabulary can grow without breaking older artifacts.
+
+| stage kind | `param` | type | effect |
+|---|---|---|---|
+| `molecular3d` | `representation` | enum `cartoon \| surface \| sticks \| spheres` | base style of the whole structure |
+| `molecular3d` | `highlights.<id>.visible` | boolean | show/hide colored highlight `<id>` over the base style |
+| `molecular3d` | `spin` | boolean | auto-rotate the viewer |
+| `chart` | `axes.y.log` | boolean | log-scale the Y axis (positive values only) |
+
+If a `molecular3d` stage declares **no** control with `param: "representation"`, the renderer
+synthesizes a default representation `select` so the picker is always available.
+
+#### Highlight selection grammar (molecular3d) — v1
+`highlights[].selection` is a small, documented subset of the PDB selection language. The renderer
+parses it to a 3Dmol atom selection and paints the highlight's `color` over the base representation;
+visibility is driven by the `highlights.<id>.visible` param.
+
+| form | matches |
+|---|---|
+| `chain X` | all atoms in chain X (id upper-cased) |
+| `resi N` | residue N |
+| `resi N-M` | residues N…M (inclusive) |
+| `resi N,M` | residues N and M (list entries may themselves be ranges) |
+| `chain X and resi N-M` | the intersection |
+
+Whitespace-tolerant; keywords are case-insensitive; clauses compose with `and`. An **unparseable**
+selection (unknown keyword, non-integer residue, reversed range like `5-2`, or a duplicated key)
+renders no highlight — the rest of the artifact still renders.
 
 ### captions[] — annotations bound to a slot
 ```jsonc
@@ -176,7 +210,7 @@ A kinase inhibitor's selectivity across targets.
     "id": "stage", "kind": "chart", "chartType": "bar",
     "axes": { "x": "target", "y": "IC50 (nM)" },
     "series": [ { "name": "CHEMBL123", "data": [
-      { "target": "Y", "value": 8 }, { "target": "Z", "value": 470 }, { "target": "W", "value": 1200 } ] } ]
+      { "target": "Y", "IC50 (nM)": 8 }, { "target": "Z", "IC50 (nM)": 470 }, { "target": "W", "IC50 (nM)": 1200 } ] } ]
   },
   "panels": [
     { "id": "moa", "kind": "prose", "content": "ATP-competitive inhibitor; mechanism from ChEMBL." }
@@ -195,9 +229,8 @@ Provenance: ChEMBL `CHEMBL123` (primary) with bioactivity citation + the source 
 ## Open questions
 - Allow more than one stage per artifact (e.g. structure + chart side by side)? v1 = one
   stage. Trigger: a finding genuinely needs two co-equal hero surfaces.
-- **Being resolved (1b-follow PR1):** exact `param` grammar for controls (dotted path vs. typed
-  enum). v1 keeps dotted paths with a per-stage-kind whitelist; proposed in
-  `docs/renderer-hardening.md`, normative here when PR1 lands.
-- **Being resolved (1b-follow PR1):** the 3Dmol.js `selection` grammar (subset of PDB selection
-  language) — proposed v1 subset in `docs/renderer-hardening.md`; PR1 implements `parseSelection`
-  → 3Dmol `AtomSelectionSpec` and maps `highlights[].selection` to colored styles.
+- **Resolved (1b-follow PR1):** the control `param` grammar — v1 keeps dotted paths with a
+  per-stage-kind whitelist (see *Param grammar* above; renderer in `lib/renderer/params.ts`).
+- **Resolved (1b-follow PR1):** the molecular3d `selection` grammar — v1 subset specified above
+  (*Highlight selection grammar*) and implemented as `parseSelection` (`lib/renderer/selection.ts`)
+  → 3Dmol atom selection, mapping `highlights[].selection` to colored styles.

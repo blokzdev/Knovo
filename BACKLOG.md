@@ -21,7 +21,7 @@ mirrors into the Open questions section here.
 | **SEO / OG / PWA polish** | Phase 1c shipped sitemap, robots, RSS, JSON-LD, and OpenGraph on artifacts. Still deferred: Twitter cards, generated OG images, web manifest, installable PWA. | Phase 3 (site experience) or first public launch — see roadmap Phase 3. |
 | **Rich marketing/legal/app pages** | Phase 0 `/legal/*` pages are intentionally minimal; landing/about/browse design deferred. | Phase 3 — content engine proven, ready to invest in public presence. |
 | **Admin dashboard HUD** | ✅ Delivered (Phase 1b, 2026-06-22): queue, preview, directive composer, status controls, workers dispatch, revisions/audit. | — (done) |
-| **Renderer hardening** | `<ArtifactRenderer>` v1 ships real charts + 3D + panels/captions/provenance. **In progress (Phase 1b-follow)** — plan of record in `docs/renderer-hardening.md`. PR0 done (migration `0007`). Remaining: PR1 control→stage param-grammar + molecular3d highlight selection→3D (+ spin, chart y-log), PR2 tldraw `diagram` rendering, PR3 immersive responsive mode. | Being pulled now (Phase 1b-follow). |
+| **Renderer hardening** | `<ArtifactRenderer>` v1 ships real charts + 3D + panels/captions/provenance. **In progress (Phase 1b-follow)** — plan of record in `docs/renderer-hardening.md`. Done: PR0 (migration `0007`), PR1 (control→stage param-grammar + molecular3d highlight selection→3D, spin, chart y-log; vitest added). Remaining: PR2 tldraw `diagram` rendering, PR3 immersive responsive mode. | Being pulled now (Phase 1b-follow). |
 | **Public read site wiring** | The shared `<ArtifactRenderer>` is built but only used in the admin HUD; public `app/a/[slug]` is still a stub. | Phase 1c — wire renderer + JSON-LD + series pages. |
 | **Admin manual full-doc editing** | Admin directs the Editor worker to change content; no in-dashboard slot editor. | Admin needs to hand-edit a doc without a worker. |
 | **Fully-autonomous publish worker** | Current model requires an admin directive to publish. A worker that publishes without per-item direction is possible but deliberately not built. | Admin trusts the pipeline enough to drop the per-item publish gate. |
@@ -80,13 +80,13 @@ mirrors into the Open questions section here.
 ### artifact-schema.md
 - Allow more than one stage per artifact? (v1: one.) *Trigger:* a finding needs two
   co-equal hero surfaces.
-- **Being resolved (1b-follow PR1):** Control `param` grammar (dotted path vs. typed enum). v1
-  keeps dotted paths, with a per-stage-kind whitelist (proposed in `docs/renderer-hardening.md`);
-  normative in `artifact-schema.md` when PR1 lands.
-- **Being resolved (1b-follow PR1):** the molecular3d highlight `selection` grammar (subset of PDB
-  selection language). v1 subset (`chain X`, `resi N`, `resi N-M`, `resi N,M`, `chain X and resi
-  N-M`) is proposed in `docs/renderer-hardening.md`; PR1 implements `parseSelection` → 3Dmol and
-  maps `highlights[].selection` to colored styles (today highlights are listed as captions).
+- **Resolved (1b-follow PR1):** Control `param` grammar — v1 keeps dotted paths with a
+  per-stage-kind whitelist (normative in `foundation/artifact-schema.md`; renderer in
+  `lib/renderer/params.ts`).
+- **Resolved (1b-follow PR1):** the molecular3d highlight `selection` grammar — v1 subset
+  (`chain X`, `resi N`, `resi N-M`, `resi N,M`, `chain X and resi N-M`) specified in
+  `foundation/artifact-schema.md` and implemented as `parseSelection` (`lib/renderer/selection.ts`)
+  → 3Dmol atom selection; `highlights[].selection` now renders as colored 3D overlays.
 
 ### security-and-privacy.md
 - **Resolved (2026-06-22):** least-privilege is the **governed Knovo API with per-worker
