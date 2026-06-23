@@ -117,14 +117,19 @@ highlight toggles its colored overlay, spin rotates, and the chart's y-log toggl
 ## PR2 — tldraw diagram rendering
 **Goal:** `diagram.snapshot` renders read-only.
 
-Scope: add the `tldraw` dependency; `DiagramStage.tsx` becomes a real component receiving the
-stage; render the snapshot **read-only**, lazy-loaded client-only (dynamic import, `ssr:false`,
-hidden UI, zoom-to-fit, `isReadonly`) mirroring the 3Dmol pattern; `InteractiveStage` passes the
-stage through. Keep tldraw strictly lazy (large bundle). Update `artifact-schema.md`/`BACKLOG.md`.
-Extend the seed with a small diagram snapshot to verify.
+**Resolved approach (built):** tldraw current stable is **v5** (5.1.1; the original "v3.x" note
+was stale). The read-only path is **`<TldrawImage>`** — tldraw renders the snapshot to a **static
+SVG once** (no reactive editor/store mounted at runtime), so there is nothing to hide and no
+`isReadonly`/`zoomToFit` needed (`padding="auto"` auto-fits, `darkMode` themes it). That SVG is
+wrapped in a featherweight DOM pan/zoom container (`react-zoom-pan-pinch`, zero-dep) so the reader
+can pan/zoom/pinch without the editor's weight; wheel-zoom is gated behind Ctrl/Cmd so the reader
+page is never scroll-jacked. The heavy tldraw bundle + `tldraw/tldraw.css` load only via a
+`next/dynamic(ssr:false)` split (`DiagramCanvas.tsx`), keeping them out of the main/server bundle.
+`InteractiveStage` passes the stage through (diagram has no controls in v1). No schema change.
 
-Files: `components/renderer/{DiagramStage,InteractiveStage}.tsx`; `package.json`;
-`foundation/artifact-schema.md`; `BACKLOG.md`; `scripts/seed-demo-artifact.ts`.
+Files: `components/renderer/{DiagramStage,DiagramCanvas,InteractiveStage}.tsx`; `package.json`
+(+ `tldraw`, `react-zoom-pan-pinch`); `foundation/artifact-schema.md`; `BACKLOG.md`;
+`scripts/seed-demo-artifact.ts` (+ `scripts/diagram-demo-snapshot.json`).
 
 ## PR3 — Immersive responsive mode
 **Goal:** the immersive layout from `artifact-schema.md`'s table.
@@ -142,5 +147,5 @@ Files: `components/renderer/ArtifactRenderer.tsx` (+ likely a new `ImmersiveShel
 ## Status
 - [x] PR0 — migration `0007` (advisors 0028/0029) + this plan capture.
 - [x] PR1 — interactive controls + 3D highlights (+ vitest, grammars, routines, seed).
-- [ ] PR2 — tldraw diagram.
+- [x] PR2 — tldraw diagram (`TldrawImage` static SVG + lightweight pan/zoom; tldraw v5).
 - [ ] PR3 — immersive mode.
