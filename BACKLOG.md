@@ -31,6 +31,9 @@ mirrors into the Open questions section here.
 | **Fully-autonomous publish worker** | Current model requires an admin directive to publish. A worker that publishes without per-item direction is possible but deliberately not built. | Admin trusts the pipeline enough to drop the per-item publish gate. |
 | **File attachments to worker directives** | The routine API trigger payload is text-only (no files). Admin file hand-off would go via storage + a referenced URL. | Admin needs to attach a file/image to a directive. |
 | **Public series pages** | `series` table + membership exist; public series routes not built. | Public read site (Phase 1c). |
+| **Worker-harness read-write coordination + Supervisor** | Designed in `foundation/worker-harness.md` (harness repo, AGENTS.md/CLAUDE.md constitution, per-worker subfolders, scoped writes, the 4th Supervisor routine, github-event triggers). **Deferred** per scope-wall — today the repo is read-only context and there are three workers with static prompts. | Roadmap "Platform horizon" M1/M2 pulled (repo writes + Supervisor wanted). |
+| **Modular / parametric routine prompts** | `compose(domainTemplate, workerRoleModule, adminParams)` with `routine_configs.params jsonb` + settings knobs (`worker-harness.md` §7). Prompts are static today (drift-guarded `lib/workers/routines.ts` ↔ `docs/routines.md`). **Deferred.** | Roadmap "Platform horizon" M3 — operators need per-worker customization. |
+| **Multi-tenant AI Blog-as-a-Service (north star)** | Owner-directed vision (`vision.md`): domain templates + multi-tenant data model + onboarding, Knovo as showcase tenant. **Recorded, not scheduled** (scope-wall); narrow-niche Decision 1 still governs the Knovo tenant. | Roadmap "Platform horizon" M4–M6 — Knovo validated and a second domain wanted. |
 
 ---
 
@@ -72,6 +75,19 @@ mirrors into the Open questions section here.
   low-value findings.
 - Surface validation failures to the admin vs. silent stop. *Trigger:* suspicion that good
   findings are silently dropped.
+
+### worker-harness.md
+- **Supervisor trigger default** — schedule vs github-event vs manual, and whether it ever needs a
+  read-only token vs none. *Trigger:* implementing read-write coordination (M2).
+- **GitHub-event concurrency** — rebase-before-write alone vs a concurrency group / debounce.
+  *Trigger:* first observed double-run race.
+- **Parametric composer shape** — does it *replace* the static blocks or *layer* as optional
+  overrides (defaults stay static), and the `params jsonb` schema / first param set. *Trigger:*
+  starting M3.
+- **Public vs private baseline** — is the shipped baseline harness public (open-source exemplar) or
+  a private template each tenant clones. *Trigger:* publishing the baseline repo.
+- **Supervisor as a registered routine** — does it get a 4th fire-URL row in `/admin/settings` and a
+  4th `routine_configs.worker` value. *Trigger:* wiring the Supervisor.
 
 ### content-integrity.md
 - Minimum citation completeness to accept a draft (e.g. require DOI for preprints).

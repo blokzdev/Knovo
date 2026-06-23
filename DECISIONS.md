@@ -24,6 +24,18 @@ proposal to `BACKLOG.md` and ask (per `CLAUDE.md`).
 > (masked to `••••last4`), and every change is audit-logged. Env remains a fallback; dispatch
 > resolves DB-first. Encryption-at-rest for the stored token is deferred (`BACKLOG.md`).
 
+> **2026-06-23 — Platform-vision note (NOT an amendment).** With the owner's direction, the recorded
+> long-term north star is a **domain-agnostic, multi-tenant "AI Blog-as-a-Service"** (Knovo = the
+> science showcase tenant), built on a **worker-harness** repo + a 4th **Supervisor** routine,
+> **modular/parametric prompts**, and **github-event triggers** (design: `foundation/worker-harness.md`;
+> milestones: `roadmap.md` → "Platform horizon"; framing: `vision.md`). **This changes no decision
+> now** — all nine stay frozen and the narrow-niche Decision 1 continues to govern the Knovo tenant.
+> It is recorded so the architecture stays template-ready and so the eventual change is made
+> consciously: when the relevant milestones are pulled, expect amendments to **Decision 1** (niche →
+> per-tenant niche), **Decisions 2 & 6** (single-tenant + "workers don't push to the repo"
+> assumptions), **Decision 4** (per-tenant tokens), **Decision 8** (per-worker `params` storage), and
+> **Decision 9** (templated/composed prompt vocabulary). Until then, propose-and-ask still applies.
+
 | # | Decision | Rationale | Status |
 |---|---|---|---|
 | 1 | **Narrow niche only:** structural/molecular biology, molecular pharmacology, de novo protein & drug design. NOT broad biomedical, NOT patient-facing/consumer health. | Defensible wedge; trustworthy autonomous authoring needs a bounded domain. | Locked |
