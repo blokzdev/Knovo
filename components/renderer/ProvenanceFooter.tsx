@@ -1,4 +1,8 @@
-import { ExternalLink } from "lucide-react";
+"use client";
+
+import { useId, useState } from "react";
+import { ChevronDown, ExternalLink } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 // Auto-rendered provenance — derived from artifact_sources ⋈ sources, never authored.
 export type ProvenanceSource = {
@@ -50,17 +54,34 @@ function SourceRow({ s }: { s: ProvenanceSource }) {
 }
 
 export function ProvenanceFooter({ sources }: { sources: ProvenanceSource[] }) {
+  const [open, setOpen] = useState(true);
+  const panelId = useId();
   if (sources.length === 0) return null;
   const primary = sources.filter((s) => s.role === "primary");
   const supporting = sources.filter((s) => s.role !== "primary");
   return (
     <footer className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Sources</h3>
-      <ul className="mt-1 divide-y divide-border">
-        {[...primary, ...supporting].map((s) => (
-          <SourceRow key={`${s.source_db}:${s.source_uid}`} s={s} />
-        ))}
-      </ul>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        className="flex w-full items-center justify-between gap-2 text-left"
+      >
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Sources <span className="font-normal normal-case text-muted-foreground/70">({sources.length})</span>
+        </h3>
+        <ChevronDown
+          className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", !open && "-rotate-90")}
+        />
+      </button>
+      {open && (
+        <ul id={panelId} className="mt-1 divide-y divide-border">
+          {[...primary, ...supporting].map((s) => (
+            <SourceRow key={`${s.source_db}:${s.source_uid}`} s={s} />
+          ))}
+        </ul>
+      )}
     </footer>
   );
 }

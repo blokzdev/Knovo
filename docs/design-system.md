@@ -49,6 +49,15 @@ collapsing to the 4 status tokens.
   `CopyButton`), `components/common/Avatar` (image-or-initial; dedupes account + comment avatars).
 - Prefer these over re-deriving markup; `components/ui/*` (shadcn) remain the lower-level primitives.
 
+## Renderer immersive mode
+The artifact stage can expand to a full-viewport **in-page overlay** (`InteractiveStage` toggles its
+container to `fixed inset-0 z-40`; the stage stays the same mounted instance so the live viewer is
+never reloaded). The overlay sits at **z-40** specifically so Radix popovers that portal to `<body>`
+at z-50 — the `ControlsBar` `Select`, and the panels/provenance drawers — layer above it. Those
+drawers **reuse `components/ui/sheet`** (right = panels, bottom = provenance); no new dependency.
+Scroll-lock + Escape + focus-restore live in `lib/renderer/use-immersive.ts`. Canonical behaviour:
+`docs/renderer-hardening.md` (PR3) + the layout table in `foundation/artifact-schema.md`.
+
 ## Responsive & a11y
 - Mobile-first; verified at **360 / 768 / 1024 / 1440**. Headers collapse to a drawer below `md`
   (admin) / stay inline (public, single link). Renderer stage heights are fluid (`clamp(...vh...)`).

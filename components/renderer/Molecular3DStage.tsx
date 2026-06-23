@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import type { ArtifactDocV1 } from "@/lib/artifact-schema";
+import { cn } from "@/lib/utils";
 import {
   getRepresentation,
   getSpin,
@@ -22,6 +23,7 @@ type MolViewer = {
   spin: (axis: string | boolean) => void;
   zoomTo: (sel?: object) => void;
   setBackgroundColor?: (color: string) => void;
+  resize?: () => void;
   render: () => void;
   clear?: () => void;
 };
@@ -62,7 +64,15 @@ function coloredStyleFor(rep: Representation, color: string): Record<string, unk
   }
 }
 
-export function Molecular3DStage({ stage, params }: { stage: Mol3D; params: ParamsMap }) {
+export function Molecular3DStage({
+  stage,
+  params,
+  fill = false,
+}: {
+  stage: Mol3D;
+  params: ParamsMap;
+  fill?: boolean;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<MolViewer | null>(null);
   const cameraSetRef = useRef(false);
@@ -156,8 +166,35 @@ export function Molecular3DStage({ stage, params }: { stage: Mol3D; params: Para
     viewer.render();
   }, [bgColor, status]);
 
+  // Re-fit the canvas when the container resizes (notably entering/leaving immersive, where the
+  // height jumps from the clamp to the full viewport). rAF-coalesced; the viewer instance persists.
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host || typeof ResizeObserver === "undefined") return;
+    let frame = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const viewer = viewerRef.current;
+        if (!viewer) return;
+        viewer.resize?.();
+        viewer.render();
+      });
+    });
+    ro.observe(host);
+    return () => {
+      cancelAnimationFrame(frame);
+      ro.disconnect();
+    };
+  }, []);
+
   return (
-    <div className="relative h-[clamp(300px,50vh,360px)] w-full overflow-hidden rounded-lg border border-border bg-card">
+    <div
+      className={cn(
+        fill ? "h-full" : "h-[clamp(300px,50vh,360px)]",
+        "relative w-full overflow-hidden rounded-lg border border-border bg-card",
+      )}
+    >
       <div ref={hostRef} className="absolute inset-0" />
       {status !== "ready" && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/70 text-sm text-muted-foreground">

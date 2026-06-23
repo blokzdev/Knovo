@@ -131,16 +131,25 @@ Files: `components/renderer/{DiagramStage,DiagramCanvas,InteractiveStage}.tsx`; 
 (+ `tldraw`, `react-zoom-pan-pinch`); `foundation/artifact-schema.md`; `BACKLOG.md`;
 `scripts/seed-demo-artifact.ts` (+ `scripts/diagram-demo-snapshot.json`).
 
-## PR3 — Immersive responsive mode
+## PR3 — Immersive responsive mode (built)
 **Goal:** the immersive layout from `artifact-schema.md`'s table.
 
-Scope: a fullscreen/expand toggle on the stage; fullscreen stage, panels in a collapsible
-drawer, controls as a floating overlay, captions pinned, provenance as a collapsible sheet.
-**Open UX forks (decide when we reach it):** Fullscreen API vs. in-page fixed overlay; shadcn
-drawer vs. sheet for panels. Last because it is the most UX-design-heavy.
+**Resolved approach (built as PR6):** an expand button on the stage promotes it to an **in-page
+fixed overlay** (`InteractiveStage` toggles its container to `fixed inset-0 z-40`). The forks are
+resolved: **in-page overlay, NOT the native Fullscreen API**, and the stage stays the **same
+mounted React instance** (stable key) so expanding never reloads the live 3Dmol/tldraw viewer or
+loses camera/zoom/control state. Panels/provenance reuse the existing **`components/ui/sheet`**
+(Radix-based; no vaul, no new dep): panels in a right Sheet ("Details"), provenance in a bottom
+Sheet ("Sources"). Controls become a floating bottom overlay (the stateless `ControlsBar` reused),
+captions are pinned top-left, and the overlay sits at z-40 so body-portaled Radix popovers (Select,
+Sheets) layer above it. Body scroll-lock + Escape + focus-restore live in `lib/renderer/use-immersive.ts`.
+The stages gained a `fill` prop (`h-full` vs the clamp); `Molecular3DStage` re-fits via a
+`ResizeObserver` → `viewer.resize()`. Opportunistic win: `ProvenanceFooter` is now collapsible
+(matching the table's "collapsible" in all modes).
 
-Files: `components/renderer/ArtifactRenderer.tsx` (+ likely a new `ImmersiveShell`);
-`components/renderer/InteractiveStage.tsx`; `foundation/artifact-schema.md`; `BACKLOG.md`.
+Files: `components/renderer/{InteractiveStage,ImmersiveChrome,CaptionList,ProvenanceFooter,
+Molecular3DStage,ChartStage,DiagramStage,ArtifactRenderer}.tsx`; `lib/renderer/use-immersive.ts`;
+`foundation/artifact-schema.md`; `docs/design-system.md`; `BACKLOG.md`. No schema change.
 
 ---
 
@@ -148,4 +157,6 @@ Files: `components/renderer/ArtifactRenderer.tsx` (+ likely a new `ImmersiveShel
 - [x] PR0 — migration `0007` (advisors 0028/0029) + this plan capture.
 - [x] PR1 — interactive controls + 3D highlights (+ vitest, grammars, routines, seed).
 - [x] PR2 — tldraw diagram (`TldrawImage` static SVG + lightweight pan/zoom; tldraw v5).
-- [ ] PR3 — immersive mode.
+- [x] PR3 — immersive mode (in-page overlay; CSS-promoted live stage; Sheet drawers).
+
+**All four renderer-hardening gaps are now closed.**

@@ -160,6 +160,11 @@ validation and the artifact is not stored.
 The routine is unaware of these modes; it only fills slots. Changing layout changes the
 renderer once, for all artifacts.
 
+**Immersive mode is implemented** (renderer-owned): an expand button on the stage promotes it to a
+full-viewport in-page overlay where the stage stays the same mounted instance (no viewer reload),
+controls float, captions pin, and panels/provenance open in drawers. See the immersive row above
+and `docs/renderer-hardening.md` (PR3) / `docs/design-system.md`.
+
 ---
 
 ## Worked example 1 — a de novo binder structure
