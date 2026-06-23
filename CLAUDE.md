@@ -61,7 +61,9 @@ This file is the memory harness for every session. Read it first, every time.
 Whenever the **schema**, **connectors**, or **generation flow** change: regenerate
 `docs/routines.md` **and** output a **paste-ready block** so the operator can update the
 routine in the Claude web app. `docs/routines.md` is the canonical source for the external
-routine instructions.
+routine instructions. The admin dashboard (`/admin/settings`) surfaces these same per-worker
+blocks for in-app copy via the typed mirror `lib/workers/routines.ts`; keep that file in lockstep
+with `docs/routines.md` in the same change — `lib/workers/routines.test.ts` fails on any drift.
 
 ## Decision changes
 The nine decisions in `DECISIONS.md` are frozen. If a change seems warranted, **write it to
