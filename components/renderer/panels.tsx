@@ -8,10 +8,10 @@ function KeyValuePanel({ content }: { content: { k: string; v: string }[] }) {
     <dl className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-[max-content_1fr]">
       {content.map((row, i) => (
         <div key={i} className="contents">
-          <dt className="text-xs font-medium uppercase tracking-wide text-neutral-500 sm:py-1">
+          <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground sm:py-1">
             {row.k}
           </dt>
-          <dd className="text-sm text-neutral-800 sm:py-1">{row.v}</dd>
+          <dd className="text-sm text-foreground sm:py-1">{row.v}</dd>
         </div>
       ))}
     </dl>
@@ -20,11 +20,11 @@ function KeyValuePanel({ content }: { content: { k: string; v: string }[] }) {
 
 function FigurePanel({ content }: { content: { src: string; alt: string } }) {
   return (
-    <figure className="overflow-hidden rounded-lg border border-neutral-200">
+    <figure className="overflow-hidden rounded-lg border border-border">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={content.src} alt={content.alt} className="w-full" />
       {content.alt && (
-        <figcaption className="border-t border-neutral-200 bg-neutral-50 px-3 py-2 text-xs text-neutral-500">
+        <figcaption className="border-t border-border bg-muted px-3 py-2 text-xs text-muted-foreground">
           {content.alt}
         </figcaption>
       )}

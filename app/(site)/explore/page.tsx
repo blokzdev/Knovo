@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ArtifactCard } from "@/components/site/ArtifactCard";
+import { PageHeader } from "@/components/common/layout";
 import { listPublished } from "@/lib/artifacts/public";
 
 export const dynamic = "force-dynamic";
@@ -14,11 +15,10 @@ export default async function ExplorePage() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <h1 className="text-2xl font-semibold tracking-tight">Explore</h1>
-      <p className="mt-1 text-sm text-neutral-600">Every published explainer, newest first.</p>
+      <PageHeader title="Explore" description="Every published explainer, newest first." />
 
       {items.length === 0 ? (
-        <p className="mt-8 text-sm text-neutral-500">No published explainers yet.</p>
+        <p className="mt-8 text-sm text-muted-foreground">No published explainers yet.</p>
       ) : (
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((a) => (

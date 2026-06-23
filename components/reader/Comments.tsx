@@ -17,9 +17,9 @@ export async function Comments({
   const comments = await listComments(artifactId);
 
   return (
-    <section className="mt-12 border-t border-neutral-200 pt-8">
+    <section className="mt-12 border-t border-border pt-8">
       <h2 className="text-lg font-semibold">
-        Discussion {comments.length > 0 && <span className="font-normal text-neutral-400">· {comments.length}</span>}
+        Discussion {comments.length > 0 && <span className="font-normal text-muted-foreground">· {comments.length}</span>}
       </h2>
 
       {viewer ? (
@@ -27,12 +27,12 @@ export async function Comments({
           <CommentComposer artifactId={artifactId} slug={slug} />
         </div>
       ) : (
-        <p className="mt-4 text-sm text-neutral-500">Sign in to join the discussion.</p>
+        <p className="mt-4 text-sm text-muted-foreground">Sign in to join the discussion.</p>
       )}
 
       <ul className="mt-8 space-y-6">
         {comments.length === 0 ? (
-          <li className="text-sm text-neutral-500">No comments yet — be the first.</li>
+          <li className="text-sm text-muted-foreground">No comments yet — be the first.</li>
         ) : (
           comments.map((c) => (
             <li key={c.id}>

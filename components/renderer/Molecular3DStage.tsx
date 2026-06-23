@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "next-themes";
 import type { ArtifactDocV1 } from "@/lib/artifact-schema";
 import {
   getRepresentation,
@@ -20,6 +21,7 @@ type MolViewer = {
   addStyle: (sel: object, style: object) => void;
   spin: (axis: string | boolean) => void;
   zoomTo: (sel?: object) => void;
+  setBackgroundColor?: (color: string) => void;
   render: () => void;
   clear?: () => void;
 };
@@ -66,6 +68,9 @@ export function Molecular3DStage({ stage, params }: { stage: Mol3D; params: Para
   const cameraSetRef = useRef(false);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const isPdb = stage.source.db === "pdb";
+  const { resolvedTheme } = useTheme();
+  // Match the --card surface so the viewer blends with its container in both themes.
+  const bgColor = resolvedTheme === "dark" ? "#171717" : "#ffffff";
 
   const rep = getRepresentation(params, stage);
   const spin = getSpin(params);
@@ -91,7 +96,7 @@ export function Molecular3DStage({ stage, params }: { stage: Mol3D; params: Para
         const mod = (await import("3dmol")) as unknown as Mol3DModule;
         const $3Dmol = mod.default ?? mod;
         if (cancelled || !hostRef.current) return;
-        const viewer = $3Dmol.createViewer(hostRef.current, { backgroundColor: "white" });
+        const viewer = $3Dmol.createViewer(hostRef.current, { backgroundColor: bgColor });
         viewerRef.current = viewer;
         $3Dmol.download(`pdb:${stage.source.uid}`, viewer, {}, () => {
           if (cancelled) return;
@@ -143,11 +148,19 @@ export function Molecular3DStage({ stage, params }: { stage: Mol3D; params: Para
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [styleKey, status]);
 
+  // Keep the viewer background in sync with the active theme.
+  useEffect(() => {
+    const viewer = viewerRef.current;
+    if (!viewer || status !== "ready") return;
+    viewer.setBackgroundColor?.(bgColor);
+    viewer.render();
+  }, [bgColor, status]);
+
   return (
-    <div className="relative h-[360px] w-full overflow-hidden rounded-lg border border-neutral-200 bg-white">
+    <div className="relative h-[clamp(300px,50vh,360px)] w-full overflow-hidden rounded-lg border border-border bg-card">
       <div ref={hostRef} className="absolute inset-0" />
       {status !== "ready" && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/70 text-sm text-neutral-500">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-background/70 text-sm text-muted-foreground">
           {status === "loading"
             ? `Loading ${stage.source.uid.toUpperCase()} from RCSB…`
             : isPdb

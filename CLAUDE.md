@@ -18,7 +18,7 @@ This file is the memory harness for every session. Read it first, every time.
 6. Then, as relevant to the task: `foundation/vision.md`, `PRD.md`,
    `technical-architecture.md`, `data-model.md`, `agent-architecture.md`,
    `security-and-privacy.md`, `deployment.md`, `build-conventions.md`, `roadmap.md`,
-   `glossary.md`, and `docs/routines.md`.
+   `glossary.md`, `docs/routines.md`, and `docs/design-system.md`.
 
 ## Standing invariants (never violate; if tempted, log to BACKLOG.md and ask)
 1. **Governed publish gate.** Workers act **only through the governed Knovo API**, which is

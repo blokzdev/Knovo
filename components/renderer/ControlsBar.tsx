@@ -27,7 +27,7 @@ export function ControlsBar({
 }) {
   if (controls.length === 0) return null;
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 rounded-lg border border-border bg-muted p-3">
       {controls.map((c) => (
         <ControlWidget
           key={c.id}
@@ -52,7 +52,7 @@ function ControlWidget({
   const num = typeof value === "number" ? value : 0;
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-medium text-neutral-600">{control.label}</span>
+      <span className="text-xs font-medium text-muted-foreground">{control.label}</span>
       {control.kind === "toggle" && (
         <Switch checked={Boolean(value)} onCheckedChange={(v) => onChange(control.param, v)} />
       )}
@@ -76,7 +76,7 @@ function ControlWidget({
       {control.kind === "slider" && (
         <input
           type="range"
-          className="h-1.5 w-32 cursor-pointer accent-neutral-900"
+          className="h-1.5 w-32 cursor-pointer accent-brand"
           value={num}
           onChange={(e) => onChange(control.param, Number(e.target.value))}
         />
@@ -84,14 +84,14 @@ function ControlWidget({
       {control.kind === "stepper" && (
         <div className="inline-flex items-center gap-2">
           <button
-            className="h-6 w-6 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+            className="h-6 w-6 rounded border border-border text-muted-foreground hover:bg-accent"
             onClick={() => onChange(control.param, num - 1)}
           >
             −
           </button>
           <span className="min-w-5 text-center text-xs tabular-nums">{num}</span>
           <button
-            className="h-6 w-6 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100"
+            className="h-6 w-6 rounded border border-border text-muted-foreground hover:bg-accent"
             onClick={() => onChange(control.param, num + 1)}
           >
             +

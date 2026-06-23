@@ -1,14 +1,16 @@
 "use client";
 
+import { useTheme } from "next-themes";
 import { Toaster as Sonner } from "sonner";
 
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
-// Toast host. Themed to match the light token palette (no next-themes dependency).
+// Toast host. Follows the active light/dark theme (token-driven surface colors).
 const Toaster = ({ ...props }: ToasterProps) => {
+  const { resolvedTheme } = useTheme();
   return (
     <Sonner
-      theme="light"
+      theme={(resolvedTheme as ToasterProps["theme"]) ?? "system"}
       className="toaster group"
       toastOptions={{
         classNames: {

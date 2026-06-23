@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ModerateComment } from "@/components/admin/ModerateComment";
+import { PageHeader } from "@/components/common/layout";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -17,9 +18,9 @@ type Row = {
 };
 
 const STATUS_STYLE: Record<Row["status"], string> = {
-  visible: "bg-emerald-50 text-emerald-700",
-  hidden: "bg-amber-50 text-amber-700",
-  removed: "bg-red-50 text-red-700",
+  visible: "bg-success/10 text-success",
+  hidden: "bg-warning/10 text-warning",
+  removed: "bg-destructive/10 text-destructive",
 };
 
 export default async function ModerationPage() {
@@ -37,25 +38,23 @@ export default async function ModerationPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Discussion</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Reader comments across all artifacts. Hide or remove anything off-topic or abusive.
-        </p>
-      </div>
+      <PageHeader
+        title="Discussion"
+        description="Reader comments across all artifacts. Hide or remove anything off-topic or abusive."
+      />
 
-      <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <div className="overflow-hidden rounded-lg border border-border bg-card">
         {comments.length === 0 ? (
           <p className="p-8 text-center text-sm text-muted-foreground">No reader comments yet.</p>
         ) : (
-          <ul className="divide-y divide-neutral-100">
+          <ul className="divide-y divide-border">
             {comments.map((c) => (
               <li key={c.id} className="space-y-2 p-4">
-                <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span className={cn("rounded-full px-2 py-0.5 font-medium", STATUS_STYLE[c.status])}>
                     {c.status}
                   </span>
-                  <span className="font-medium text-neutral-700">
+                  <span className="font-medium text-foreground">
                     {c.author?.display_name?.trim() || c.author?.email || "Reader"}
                   </span>
                   <span>· {new Date(c.created_at).toLocaleDateString()}</span>
@@ -63,13 +62,13 @@ export default async function ModerationPage() {
                   {c.artifact && (
                     <>
                       <span>· on</span>
-                      <Link href={`/a/${c.artifact.slug}`} className="underline hover:text-neutral-900">
+                      <Link href={`/a/${c.artifact.slug}`} className="underline hover:text-foreground">
                         {c.artifact.title}
                       </Link>
                     </>
                   )}
                 </div>
-                <p className="whitespace-pre-wrap text-sm leading-6 text-neutral-700">{c.body}</p>
+                <p className="whitespace-pre-wrap text-sm leading-6 text-foreground">{c.body}</p>
                 <ModerateComment
                   commentId={c.id}
                   status={c.status}

@@ -21,12 +21,12 @@ export default async function SeriesPage({ params }: { params: { slug: string } 
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Series</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Series</p>
       <h1 className="mt-1 text-2xl font-semibold tracking-tight">{s.title}</h1>
-      {s.summary && <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-600">{s.summary}</p>}
+      {s.summary && <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{s.summary}</p>}
 
       {s.artifacts.length === 0 ? (
-        <p className="mt-8 text-sm text-neutral-500">No published parts yet.</p>
+        <p className="mt-8 text-sm text-muted-foreground">No published parts yet.</p>
       ) : (
         <ol className="mt-8 grid gap-4 sm:grid-cols-2">
           {s.artifacts.map((a) => (

@@ -23,7 +23,8 @@ mirrors into the Open questions section here.
 | **Admin dashboard HUD** | ✅ Delivered (Phase 1b, 2026-06-22): queue, preview, directive composer, status controls, workers dispatch, revisions/audit. | — (done) |
 | **Admin routine-trigger settings (BYOK)** | ✅ Delivered (2026-06-23, `0008`): `/admin/settings` stores each routine's fire-trigger URL + token (+ `KNOVO_API_BASE`) — admin-only RLS, server-only reads, masked UI, audited; env stays a fallback. Unblocks dashboard "run now" dispatch without a redeploy. Decision 8 amended. | — (done) |
 | **Encrypt routine trigger token at rest** | `routine_configs.token` is stored plaintext (mitigated by admin-only RLS, server-only reads, masked UI). Acceptable for a single-admin HUD. | More admins, or a secret-exposure scare → add pgcrypto/pgsodium or move to a secrets manager. |
-| **Design-system & layout elevation (dedicated PR)** | Brand-aware design pass — token system + shared primitives + light/dark across surfaces — deliberately split from the BYOK settings PR so each ships independently. Outlined in the PR plan; precedes the remaining renderer PRs in the overall sequence. | Being pulled next (after admin settings). |
+| **Design-system & layout elevation (dedicated PR)** | ✅ Delivered (2026-06-23): brand-aware token system + **light/dark toggle** (`next-themes`) across admin + public, responsive app shell (mobile nav drawer fixes the wrapping header), `next/font` typography, dark-mode-safe renderer, and shared `components/common/*` primitives. Canonical doc: `docs/design-system.md`. | — (done) |
+| **Design follow-on surfaces** | The design tokens/primitives now exist, but **auth/onboarding**, a **deep `/legal/*` redesign**, and **transactional-email templates** were deferred from the elevation PR to keep it scoped (admin + public only). | Next design pass (Phase 3) — adopt the tokens on these surfaces. |
 | **Renderer hardening** | `<ArtifactRenderer>` v1 ships real charts + 3D + panels/captions/provenance. **In progress (Phase 1b-follow)** — plan of record in `docs/renderer-hardening.md`. Done: PR0 (migration `0007`), PR1 (control→stage param-grammar + molecular3d highlight selection→3D, spin, chart y-log; vitest added). Remaining (after the inserted admin-settings + design-system PRs): tldraw `diagram` rendering, immersive responsive mode. | Being pulled (Phase 1b-follow). |
 | **Public read site wiring** | The shared `<ArtifactRenderer>` is built but only used in the admin HUD; public `app/a/[slug]` is still a stub. | Phase 1c — wire renderer + JSON-LD + series pages. |
 | **Admin manual full-doc editing** | Admin directs the Editor worker to change content; no in-dashboard slot editor. | Admin needs to hand-edit a doc without a worker. |
@@ -111,6 +112,10 @@ mirrors into the Open questions section here.
   `privacy@knovo.ai` / `legal@knovo.ai` contact addresses and confirm the subprocessor list.
 - **Logo is an SVG wordmark/monogram, not a bespoke designed mark.** *Trigger:* a brand/design
   pass (Phase 3) if a richer identity is wanted.
+- **Resolved (2026-06-23, design-system elevation):** brand **accent = indigo/violet** (from the
+  KnovoMark) as the `--brand` token; **typography = Inter + JetBrains Mono** via `next/font`;
+  **light/dark** shipped via `next-themes`. *Trigger to revisit:* a full rebrand, or a bespoke
+  display typeface / custom palette beyond the current tokens.
 
 ### deployment.md
 - Custom domain + when to provision. *Trigger:* first public launch.

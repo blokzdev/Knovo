@@ -17,7 +17,7 @@ export default async function BookmarksPage() {
     return (
       <main className="mx-auto max-w-5xl px-6 py-16">
         <h1 className="text-2xl font-semibold tracking-tight">My bookmarks</h1>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           Sign in to save explainers and find them here.
         </p>
       </main>
@@ -30,9 +30,9 @@ export default async function BookmarksPage() {
     <main className="mx-auto max-w-5xl px-6 py-12">
       <h1 className="text-2xl font-semibold tracking-tight">My bookmarks</h1>
       {items.length === 0 ? (
-        <p className="mt-4 text-sm text-neutral-500">
+        <p className="mt-4 text-sm text-muted-foreground">
           Nothing saved yet. Browse the{" "}
-          <Link href="/explore" className="underline hover:text-neutral-900">
+          <Link href="/explore" className="underline hover:text-foreground">
             library
           </Link>{" "}
           and hit Save.

@@ -49,8 +49,15 @@ One branch/PR each, owner merges between:
 > **Sequence note (2026-06-23):** two PRs were inserted ahead of the remaining renderer work, so
 > the overall order is: **admin BYOK settings** (done, `0008` — `/admin/settings` stores routine
 > fire URLs + tokens + `KNOVO_API_BASE`; unblocks dashboard dispatch without a redeploy) →
-> **design-system & layout elevation** (dedicated, planned) → renderer **PR2 (tldraw)** → renderer
+> **design-system & layout elevation** (done — see below) → renderer **PR2 (tldraw)** → renderer
 > **PR3 (immersive)**.
+>
+> **Design-system elevation (DONE 2026-06-23):** one brand-aware token system + **light/dark toggle**
+> (`next-themes`) across the **admin HUD + public site**; a responsive app shell (mobile nav drawer
+> that fixes the wrapping header); `next/font` typography (Inter + JetBrains Mono); dark-mode-safe
+> renderer (3Dmol/recharts read theme colors); shared primitives (`components/common/*`) for DRY.
+> Canonical reference: `docs/design-system.md`. Deferred to the Phase 3 follow-on below:
+> auth/onboarding, a deep `/legal/*` redesign, and transactional-email templates.
 
 **1c — Public read site (DONE 2026-06-22):** SSR live-published artifacts at clean URLs
 (`/a/<slug>`) via the shared `<ArtifactRenderer>`, with generateMetadata + JSON-LD
@@ -85,7 +92,10 @@ proven. Distinct from the single artifact renderer (Phase 1) — this is the sur
 - **Rich, interactive marketing/legal pages:** a real landing/home, an `/about`, and elevated
   `/legal/*` pages (the Phase 0 versions are intentionally minimal). Built on the MDX
   foundation laid in Phase 0.
-- **Design system & brand:** typography, color, components beyond the Phase 0 wordmark/icons.
+- **Design system & brand:** the token system + light/dark + shared primitives + typography shipped
+  in the **design-system elevation** (2026-06-23, admin + public; `docs/design-system.md`). Remaining
+  design **follow-on surfaces** that adopt those tokens: **auth/onboarding**, a **deep `/legal/*`
+  redesign**, and **transactional-email templates**.
 - **App subsections:** navigation, browse/filter by niche, an explainer index/gallery.
 - **SEO & PWA:** OpenGraph/Twitter cards, sitemap, robots, JSON-LD coverage, web manifest and
   installable PWA — the polish intentionally deferred from the Phase 0 "unblock verification"

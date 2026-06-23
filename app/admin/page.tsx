@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { WorkersPanel } from "@/components/admin/WorkersPanel";
 import { STATUS_ORDER, STATUS_META, SEVERITY_CLS, type Status } from "@/lib/admin/labels";
-import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState, PageHeader, SectionHeading, StatCard } from "@/components/common/layout";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -53,48 +53,42 @@ export default async function QueuePage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Control HUD</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Direct the autonomous editorial team — review, comment, and publish.
-        </p>
-      </div>
+      <PageHeader
+        title="Control HUD"
+        description="Direct the autonomous editorial team — review, comment, and publish."
+      />
 
       {/* Status summary */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
         {STATUS_ORDER.map((s) => (
-          <Link key={s} href={`/admin/library?status=${s}`}>
-            <Card className="transition-colors hover:border-neutral-300">
-              <CardContent className="p-3">
-                <div className="text-2xl font-semibold tabular-nums">{counts.get(s) ?? 0}</div>
-                <div className="mt-0.5 text-xs text-muted-foreground">{STATUS_META[s].label}</div>
-              </CardContent>
-            </Card>
-          </Link>
+          <StatCard
+            key={s}
+            href={`/admin/library?status=${s}`}
+            value={counts.get(s) ?? 0}
+            label={STATUS_META[s].label}
+          />
         ))}
       </div>
 
       {/* Workers */}
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-neutral-700">Dispatch workers</h2>
+        <SectionHeading>Dispatch workers</SectionHeading>
         <WorkersPanel />
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Action queue */}
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-neutral-700">Needs your attention</h2>
+          <SectionHeading>Needs your attention</SectionHeading>
           {queueItems.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-sm text-muted-foreground">
-              Nothing waiting for review.
-            </p>
+            <EmptyState>Nothing waiting for review.</EmptyState>
           ) : (
             <ul className="space-y-2">
               {queueItems.map((a) => (
                 <li key={a.id}>
                   <Link
                     href={`/admin/a/${a.id}`}
-                    className="flex items-center gap-3 rounded-lg border border-neutral-200 bg-white p-3 transition-colors hover:border-neutral-300"
+                    className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-foreground/20"
                   >
                     <StatusBadge status={a.status} />
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">{a.title}</span>
@@ -107,20 +101,18 @@ export default async function QueuePage() {
 
         {/* Open flags */}
         <section className="space-y-3">
-          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-neutral-700">
+          <SectionHeading className="flex items-center gap-1.5">
             <Flag className="h-3.5 w-3.5" /> Open flags
-          </h2>
+          </SectionHeading>
           {flags.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-neutral-300 p-6 text-center text-sm text-muted-foreground">
-              No open flags.
-            </p>
+            <EmptyState>No open flags.</EmptyState>
           ) : (
             <ul className="space-y-2">
               {flags.map((f) => (
                 <li key={f.id}>
                   <Link
                     href={`/admin/a/${f.artifact!.id}`}
-                    className="block rounded-lg border border-neutral-200 bg-white p-3 transition-colors hover:border-neutral-300"
+                    className="block rounded-lg border border-border bg-card p-3 transition-colors hover:border-foreground/20"
                   >
                     <div className="flex items-center gap-2">
                       {f.options?.severity && (
@@ -135,7 +127,7 @@ export default async function QueuePage() {
                       )}
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">{f.artifact!.title}</span>
                     </div>
-                    {f.note && <p className="mt-1 line-clamp-2 text-xs text-neutral-600">{f.note}</p>}
+                    {f.note && <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{f.note}</p>}
                   </Link>
                 </li>
               ))}
@@ -146,19 +138,19 @@ export default async function QueuePage() {
 
       {/* Recent activity */}
       <section className="space-y-3">
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-neutral-700">
+        <SectionHeading className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5" /> Recent activity
-        </h2>
-        <div className="rounded-lg border border-neutral-200 bg-white">
+        </SectionHeading>
+        <div className="rounded-lg border border-border bg-card">
           {(activity ?? []).length === 0 ? (
             <p className="p-6 text-center text-sm text-muted-foreground">No activity yet.</p>
           ) : (
-            <ul className="divide-y divide-neutral-100">
+            <ul className="divide-y divide-border">
               {(activity ?? []).map((a, i) => (
                 <li key={i} className="flex items-center gap-3 px-4 py-2 text-sm">
-                  <span className="font-mono text-xs text-neutral-500">{a.actor}</span>
-                  <span className="text-neutral-700">{a.action}</span>
-                  <span className="ml-auto text-xs text-neutral-400">
+                  <span className="font-mono text-xs text-muted-foreground">{a.actor}</span>
+                  <span className="text-foreground">{a.action}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
                     {new Date(a.created_at).toLocaleString()}
                   </span>
                 </li>

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
+import { Avatar } from "@/components/common/Avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { editComment, deleteComment } from "@/lib/reader/actions";
@@ -25,7 +26,6 @@ export function CommentItem({
   const [pending, start] = useTransition();
 
   const name = comment.author?.display_name?.trim() || "Reader";
-  const initial = (name[0] ?? "?").toUpperCase();
 
   const saveEdit = () =>
     start(async () => {
@@ -50,23 +50,11 @@ export function CommentItem({
 
   return (
     <div className="flex gap-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 text-xs font-medium text-neutral-700">
-        {comment.author?.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={comment.author.avatar_url}
-            alt=""
-            className="h-full w-full object-cover"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          initial
-        )}
-      </div>
+      <Avatar name={name} src={comment.author?.avatar_url} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-sm">
           <span className="font-medium">{name}</span>
-          <span className="text-xs text-neutral-400">
+          <span className="text-xs text-muted-foreground">
             {fmtDate(comment.created_at)}
             {comment.edited ? " · edited" : ""}
           </span>
@@ -92,12 +80,12 @@ export function CommentItem({
             </div>
           </div>
         ) : (
-          <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-neutral-700">{comment.body}</p>
+          <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-foreground">{comment.body}</p>
         )}
 
         {isOwn && !editing && (
-          <div className="mt-1 flex gap-3 text-xs text-neutral-400">
-            <button onClick={() => setEditing(true)} className="hover:text-neutral-700">
+          <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
+            <button onClick={() => setEditing(true)} className="hover:text-foreground">
               Edit
             </button>
             <button onClick={remove} disabled={pending} className="hover:text-destructive">
