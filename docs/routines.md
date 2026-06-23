@@ -36,9 +36,11 @@ The fields below match the **New cloud environment** dialog; full walkthrough in
   available by default). An optional non-fatal probe (`curl -sS "$KNOVO_API_BASE" || true`) confirms
   the allowlist is right.
 
-Then **per routine** (not on the environment): select the **Knovo** environment **and** the **Knovo**
-repository (for skills/context; workers do not push code), set its connectors + triggers, paste its
-paste-ready prompt, and mint an **API** trigger → paste the URL + token into `/admin/settings`.
+Then **per routine** (not on the environment): select the **Knovo** environment **and** your
+**worker-harness repo** (a dedicated context/coordination repo — *not* the Knovo app repo; see
+`foundation/worker-harness.md`), set its connectors + triggers, paste its paste-ready prompt, and
+mint an **API** trigger → paste the URL + token into `/admin/settings`. Workers reach content only
+through the API, so the repo is for shared context + (future) coordination notes, never content.
 
 The API verb-scopes each token: **Scout** = `dedup`, `create`; **Editor** = `dedup`, `queue`,
 `create`, `update`, `status`, `resolve`, `series`, `flag`; **Keeper** = `targets`, `update`,

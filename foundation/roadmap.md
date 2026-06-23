@@ -107,6 +107,27 @@ proven. Distinct from the single artifact renderer (Phase 1) — this is the sur
 **Phase 3 gate (sketch):** a coherent branded experience — landing, about, browse, and legal —
 that a first-time niche visitor can navigate, with SEO/social/PWA metadata complete.
 
+## Platform horizon (vision, not scheduled — owner-directed 2026-06-23)
+The north star in `vision.md`: evolve the engine into a **domain-agnostic, multi-tenant AI
+Blog-as-a-Service** with Knovo as the science showcase tenant. **Recorded, not scheduled** — these
+milestones are completion-driven and **not started until explicitly pulled**, and the narrow-niche
+invariant (Decision 1) keeps governing the Knovo tenant until the relevant milestone begins (the
+`DECISIONS.md` vision note flags which decisions each amends). Design lives in
+`foundation/worker-harness.md`.
+- **M1 — Harness baseline (read-mostly).** Publish/fork the worker-harness repo; workers *read* the
+  shared constitution + their subfolder; no repo writes yet.
+- **M2 — Read-write coordination + Supervisor.** Per-worker subfolder writes; the 4th **Supervisor**
+  routine reconciles notes into the shared layer (no content token; schedule | **github-event** |
+  fire-URL triggers; rebase-before-write).
+- **M3 — Parametric prompt composer.** `compose(domainTemplate, workerRoleModule, adminParams)`;
+  `routine_configs.params jsonb`; per-worker knobs in `/admin/settings`; the drift test shifts to
+  "default params reproduce the canonical `docs/routines.md` block."
+- **M4 — Domain template registry.** Template sets beyond molecular science (sources, voice, slot
+  conventions, connectors) selectable per tenant.
+- **M5 — Multi-tenant data model + onboarding.** Tenant isolation, per-tenant tokens, self-serve
+  setup.
+- **M6 — BaaS productization.** Billing/limits/support around the above (gated by Decision 7).
+
 ## Later (deferred — see BACKLOG.md)
 Public accounts, bookmarks, comments; 3D poster/thumbnail generation; PDF export to Google
 Drive; social preview cards; any monetization (requires Vercel Pro). None are built until
@@ -116,3 +137,5 @@ explicitly pulled from the backlog.
 - Phase 1 ordering: renderer-first vs. pipeline-first. Trigger: starting Phase 1.
 - What audience signal counts as "validated" before considering monetization. Trigger:
   first sustained traffic.
+- Platform horizon: when (if ever) to pull M1–M6 from vision into a real phase, and in what
+  order relative to Phase 2/3. Trigger: the Knovo tenant is validated and a second domain is wanted.

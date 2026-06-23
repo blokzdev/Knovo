@@ -3,7 +3,7 @@
 ## What Knovo is
 Knovo is an AI-authored library of interactive, source-grounded **explainers** in a narrow
 domain: structural/molecular biology, molecular pharmacology, and de novo protein and drug
-design. Each explainer is an interactive **artifact** — a 3D molecular structure (three.js),
+design. Each explainer is an interactive **artifact** — a 3D molecular structure (3Dmol.js),
 a diagram (tldraw), and/or charts — that makes a single significant new finding legible in
 minutes.
 
@@ -46,7 +46,35 @@ artifacts are **server-rendered with clean, stable URLs and embedded structured 
 requirement that flows directly from this vision, and it shapes the rendering strategy in
 `technical-architecture.md`.
 
+## North star (future, owner-directed) — a multi-tenant AI Blog-as-a-Service
+*(Recorded 2026-06-23. Vision, not current scope — see the scope-wall note below.)*
+
+Knovo's engine — a governed API + a slot-schema renderer + an editorial team of Claude routine
+workers coordinated through a **worker-harness repo** (`worker-harness.md`) — is not specific to
+molecular science. The long-term direction is a **domain-agnostic, multi-tenant "AI
+Blog-as-a-Service"** in which **Knovo is the science showcase tenant** and each domain/niche is a
+**template**: its own shared environment (allowlist + env), connector set, source vocabulary, and a
+constitution + per-worker role modules. A new operator picks (or forks) a domain template, points
+their routines at their own harness repo, and runs their own source-grounded, human-gated library.
+
+Two capabilities make a template both reusable and customizable:
+- **Modular / parametric prompts** — a worker's instructions are *composed*
+  (`compose(domainTemplate, workerRoleModule, adminParams)`), so an operator tunes capabilities,
+  style/flow, source-set, cadence, and triggers per worker without forking the prompt
+  (`worker-harness.md` §7).
+- **A four-agent editorial team** — Scout / Editor / Keeper / **Supervisor**, the Supervisor
+  coordinating the shared harness (`worker-harness.md` §5).
+
+**Scope-wall.** This is the deliberate, owner-directed *direction of travel* — **not** current
+scope. The narrow-niche invariant (`DECISIONS.md` Decision 1) **still governs the Knovo tenant**;
+nothing multi-tenant, no parametric composer, and no template registry is built until its roadmap
+phase is pulled (`roadmap.md` → "Platform horizon"). The decisions it will eventually touch are
+flagged in the `DECISIONS.md` vision note so they are amended consciously, at phase start.
+
 ## Open questions
+- Multi-tenant / Blog-as-a-Service north star: when (if ever) to pull it from vision into a phase,
+  and which domain proves the template second. Trigger: the Knovo tenant is validated and a second
+  domain is wanted. (See `BACKLOG.md`.)
 - Primary-source set is fixed at PDB/ChEMBL/PubMed/bioRxiv for v1. Trigger to revisit:
   repeated high-value findings whose primary source lives elsewhere (e.g. UniProt, EMDB).
 - Cadence (daily) and volume per run (one artifact) are starting points. Trigger to

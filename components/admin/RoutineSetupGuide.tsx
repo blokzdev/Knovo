@@ -84,9 +84,9 @@ export function RoutineSetupGuide({ knovoApiBase }: { knovoApiBase: string }) {
           <p className="text-xs font-medium text-foreground">Then, for each routine (in its tab below):</p>
           <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
             <li>
-              select the <span className="font-medium">Knovo</span> environment and the{" "}
-              <span className="font-medium">Knovo</span> repository (the routine clones it for context —
-              it never pushes code);
+              select the <span className="font-medium">Knovo</span> environment and your{" "}
+              <span className="font-medium">worker-harness repo</span> (a dedicated context repo, not
+              the app repo — see the harness note below);
             </li>
             <li>set its connectors, triggers, and paste its system prompt from the tab;</li>
             <li>
@@ -98,10 +98,40 @@ export function RoutineSetupGuide({ knovoApiBase }: { knovoApiBase: string }) {
           </ul>
         </div>
 
+        <div className="rounded-lg border border-border bg-muted/40 p-3">
+          <p className="text-xs font-medium text-foreground">The worker-harness repo</p>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            Each routine&apos;s <span className="font-medium">Repository</span> should be a dedicated{" "}
+            <span className="font-medium">worker-harness repo</span> — shared context for the workers,{" "}
+            <em>not</em> the Knovo app repo (whose docs are about building Knovo). Workers reach content
+            only through the API, so this repo carries context + coordination notes, never content. Use
+            the public baseline harness or fork it. Recommended structure:
+          </p>
+          <ul className="mt-1.5 list-disc space-y-1 pl-5 text-xs text-muted-foreground">
+            <li>
+              top-level <span className="font-mono">AGENTS.md</span> /{" "}
+              <span className="font-mono">CLAUDE.md</span> — the shared constitution (niche, voice,
+              slot-schema + API contract);
+            </li>
+            <li>
+              one subfolder per worker (<span className="font-mono">scout/ editor/ keeper/</span>) for
+              that worker&apos;s playbook + append-only notes.
+            </li>
+          </ul>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            <span className="font-medium">Planned (not wired yet):</span> a 4th{" "}
+            <span className="font-medium">Supervisor</span> routine that reconciles the workers&apos;
+            notes into the shared layer (no content token) — optionally triggered by a native{" "}
+            <span className="font-medium">GitHub Event</span> (a push to the harness repo) — plus
+            advanced per-worker parametric config. Design: <span className="font-medium">foundation/worker-harness.md</span>.
+          </p>
+        </div>
+
         <p className="text-xs text-muted-foreground">
           The dashboard trigger token (the <span className="font-mono">sk-ant-oat01-…</span> value) is
           stored masked and server-only, never shown again. See{" "}
-          <span className="font-medium">SETUP.md §7</span> for the full walkthrough.
+          <span className="font-medium">SETUP.md §7</span> and{" "}
+          <span className="font-medium">foundation/worker-harness.md</span> for the full walkthrough.
         </p>
       </div>
     </details>

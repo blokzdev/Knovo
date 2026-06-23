@@ -143,8 +143,11 @@ per routine, §7b):
 In **claude.ai/code → Routines**, create **Scout**, **Editor**, and **Keeper** per
 `docs/routines.md` (names + paste-ready instructions). For each routine:
 - **Environment:** select **Knovo** (from §7a) so it inherits the network policy + env vars.
-- **Repository:** select the **Knovo** repo (the routine clones it for skills/context; workers do
-  not push code — pushes are branch-restricted by the GitHub proxy anyway).
+- **Repository:** select your **worker-harness repo** — a dedicated context/coordination repo,
+  **not** the Knovo app repo (whose `CLAUDE.md` is about building Knovo, noise for a content
+  worker). Workers reach content only through the API, so the repo carries shared context + (future)
+  coordination notes, never content. Use the public baseline harness or fork it; structure +
+  rationale in `foundation/worker-harness.md`.
 - **Connectors:** Scout & Keeper = bioRxiv/ChEMBL/PubMed; Editor = + tldraw; remove all others
   (especially Supabase).
 - **Triggers:** Scout = Schedule (daily) + API; Editor = API (+ optional hourly sweep);
