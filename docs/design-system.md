@@ -48,6 +48,11 @@ collapsing to the 4 status tokens.
   wire `id`/`aria-describedby`/`aria-invalid`), `components/common/CodeBlock` (token-styled `<pre>` +
   `CopyButton`), `components/common/Avatar` (image-or-initial; dedupes account + comment avatars).
 - Prefer these over re-deriving markup; `components/ui/*` (shadcn) remain the lower-level primitives.
+- **Admin settings** (`/admin/settings`) uses a per-worker `Tabs` layout (Scout/Editor/Keeper): each
+  tab co-locates routine guidance + the copyable paste-ready prompt (`WorkerRoutineGuide`) with that
+  worker's trigger BYOK card, and its tab shows an icon + a config status dot. Worker guidance text is
+  rendered from `lib/workers/routines.ts` (drift-guarded against `docs/routines.md`). `CodeBlock` gained
+  optional `copyLabel`/`maxHeight` for long copyable blocks.
 
 ## Renderer immersive mode
 The artifact stage can expand to a full-viewport **in-page overlay** (`InteractiveStage` toggles its
