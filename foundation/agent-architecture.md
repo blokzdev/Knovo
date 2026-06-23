@@ -7,7 +7,9 @@ Vercel. They run on schedules and on-demand (dashboard-fired API triggers), and 
 Knovo data **only through the governed Knovo API** (`api.knovo.ai`) — never the database
 directly. The admin dashboard is a **control HUD**: the human directs work with status markers
 and natural-language comments; workers read those directives and act. Canonical, paste-ready
-worker instructions live in `docs/routines.md`.
+worker instructions live in `docs/routines.md`; how the workers are configured, share context,
+and (in the future) coordinate via a dedicated harness repo + a Supervisor is in
+`foundation/worker-harness.md`.
 
 ## The workers (three; grow as needed)
 - **Scout** — discovery/draft. Trawls the niche (bioRxiv, PubMed, ChEMBL, PDB-via-REST), grounds
