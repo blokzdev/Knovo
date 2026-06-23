@@ -14,6 +14,15 @@ proposal to `BACKLOG.md` and ask (per `CLAUDE.md`).
 > amended: optional public reader accounts (Google sign-in) with bookmarks, moderated public
 > comments, and subscribe are now in scope (schema `0005`). Reading stays open/account-free;
 > reader tables sit outside the worker API and slot schema, so the worker surface is unchanged.
+>
+> **2026-06-23 — Routine-trigger secrets amendment.** With the owner's approval, **Decision 8**
+> was amended: the dashboard "run now" routine-trigger credentials (per-routine fire URL + token,
+> plus the global `KNOVO_API_BASE`) may be **admin-managed in the database** (`routine_configs` /
+> `app_settings`, schema `0008`) in addition to env. This stays compatible with Decision 8's core
+> ("zero secrets in the repo"): the values live in the DB, the tables are **admin-only** (RLS
+> `is_admin()`), the token is read **only server-side** and **never returned to the browser**
+> (masked to `••••last4`), and every change is audit-logged. Env remains a fallback; dispatch
+> resolves DB-first. Encryption-at-rest for the stored token is deferred (`BACKLOG.md`).
 
 | # | Decision | Rationale | Status |
 |---|---|---|---|
@@ -24,5 +33,5 @@ proposal to `BACKLOG.md` and ask (per `CLAUDE.md`).
 | 5 | **Public reader accounts are in scope.** *(Amended 2026-06-22.)* Optional Google sign-in for readers, with **bookmarks, public reader comments (with admin moderation), and subscribe** (RSS + recorded intent now; transactional email later). Reading stays fully open/account-free. Reader tables (`bookmarks`, `reader_comments`, `subscriptions`) live in `0005` (`0006` hardened), OUTSIDE the worker API + slot schema. *(The admin-only editorial **comments/directives** in 0004 are internal control signals — distinct from public `reader_comments`.)* | Dogfood as reader + admin and seed engagement now that authoring is live; readers ≠ broad-biomedical scope creep. | Locked (amended) |
 | 6 | **Stack:** web-first — Next.js (TS, App Router) + Tailwind + shadcn/ui + Supabase (Postgres/Auth/RLS) on Vercel; responsive, PWA-capable; **no** native/desktop wrappers. Routines run in **Claude** (not Vercel) and write **through the governed Knovo API** on Vercel (`api.knovo.ai`) — not directly to the database. Vercel serves pages + the worker API + short actions, well under function timeouts. *(Amended 2026-06-22: workers write via the API, not direct to Supabase.)* | Minimal infra; discovery-friendly web; off-platform heavy work; one trusted write boundary. | Locked (amended) |
 | 7 | **No monetization/payments at MVP.** Validate audience first. | Don't build commerce before demand. | Locked |
-| 8 | **Public repo; zero secrets committed.** All keys in env and connector/worker auth. | Public code, private secrets. | Locked |
+| 8 | **Public repo; zero secrets committed.** *(Amended 2026-06-23.)* All keys in env and connector/worker auth. Additionally, admin-managed routine-trigger credentials (fire URL + token, `KNOVO_API_BASE`) may be stored in the DB (`routine_configs`/`app_settings`, `0008`) — admin-only RLS, server-only reads, masked in the UI, audited; env stays a fallback. Still zero secrets in the repo. | Public code, private secrets; operator-set runtime secrets stay out of the repo. | Locked (amended) |
 | 9 | **Artifacts are versioned slot-schema documents** (starter vocab: stage / panel / controls / caption + auto provenance footer), stored as JSONB, rendered by ONE responsive renderer that owns all layout (portrait/landscape/immersive). Workers fill slots — never emit layout, never escape the schema. *(zod validation runs in the Knovo API before any write.)* v1 vocabulary is minimal and grows only by reviewed schema change + version bump; older artifacts keep rendering after a bump. | Safe authoring, consistent rendering, controlled evolution. | Locked |

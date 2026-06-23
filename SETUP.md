@@ -92,9 +92,12 @@ Note: Vercel **Hobby** is non-commercial; moving to ads/paid requires **Pro**.
    - `KNOVO_WORKER_TOKEN_SCOUT`, `KNOVO_WORKER_TOKEN_EDITOR`, `KNOVO_WORKER_TOKEN_KEEPER`.
    Set them in the **Vercel env** (so the API can verify) — server-only, never `NEXT_PUBLIC_`.
 3. **Routine fire (dashboard "run now").** After creating each routine (step 7), add an **API
-   trigger** and copy its URL + `sk-ant-oat01-…` token into Vercel env as
+   trigger** and copy its URL + `sk-ant-oat01-…` token. **Preferred:** paste them into
+   **`/admin/settings`** (the in-HUD BYOK config — stored in the DB, admin-only, masked, audited;
+   no redeploy). They can alternatively be set in Vercel env as
    `ROUTINE_SCOUT_FIRE_URL`/`ROUTINE_SCOUT_TOKEN`, `ROUTINE_EDITOR_FIRE_URL`/`ROUTINE_EDITOR_TOKEN`,
-   and `ROUTINE_KEEPER_FIRE_URL`/`ROUTINE_KEEPER_TOKEN`. `KNOVO_API_BASE = https://api.knovo.ai`.
+   and `ROUTINE_KEEPER_FIRE_URL`/`ROUTINE_KEEPER_TOKEN` (a DB value overrides the env one).
+   `KNOVO_API_BASE = https://api.knovo.ai`.
 
 The API uses `SUPABASE_SERVICE_ROLE_KEY` server-side and enforces zod validation, the
 admin-directed publish gate, audit logging, and soft-delete. Never give a worker the
@@ -134,15 +137,22 @@ In **claude.ai/code → Routines**, create **Scout**, **Editor**, and **Keeper**
   (especially Supabase).
 - **Triggers:** Scout = Schedule (daily) + API; Editor = API (+ optional hourly sweep);
   Keeper = Schedule (weekly) + API.
-- **API trigger token:** add an API trigger, then copy its URL + `sk-ant-oat01-…` token into the
-  Vercel env as `ROUTINE_{SCOUT,EDITOR,KEEPER}_FIRE_URL` / `_TOKEN` (§6.3) so the dashboard
-  "run now" can fire it.
+- **API trigger token:** add an API trigger, then copy its URL + `sk-ant-oat01-…` token into
+  **`/admin/settings`** (preferred — in-HUD BYOK config, no redeploy) or the Vercel env as
+  `ROUTINE_{SCOUT,EDITOR,KEEPER}_FIRE_URL` / `_TOKEN` (§6.3) so the dashboard "run now" can fire it.
+  The settings page also shows a setup guide with the exact env block for this "Knovo" environment.
 
 Whenever the schema/connectors/flow change, regenerate `docs/routines.md` and re-paste.
 
 ## Migrations
-SQL lives in `supabase/migrations/` (`0001`–`0004`). Apply new migrations to **dev first, then
+SQL lives in `supabase/migrations/` (`0001`–`0008`). Apply new migrations to **dev first, then
 prod**, keep both in sync, and regenerate `lib/database.types.ts` after schema changes.
+
+**Apply `0008` (routine settings)** the same way: open each project's **SQL Editor → New query**,
+paste the entire contents of `supabase/migrations/0008_routine_settings.sql`, **Run** (dev first,
+then prod). It creates `routine_configs` + `app_settings` (admin-only RLS, `updated_at` triggers).
+**Verify:** Table Editor shows both tables; **Advisors → Security** shows no new errors; a non-admin
+cannot read `routine_configs`. Then the admin can configure routine triggers in `/admin/settings`.
 
 **Apply `0004` via the Supabase dashboard** (works without the CLI):
 1. Open the **dev** project (`knovo-dev`, ref `hgsgnaeevqviwagepgsw`) → **SQL Editor** → **New

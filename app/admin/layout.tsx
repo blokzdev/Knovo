@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getAdminContext } from "@/lib/admin/guard";
 import { KnovoWordmark } from "@/components/Logo";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { SignInButton, SignOutButton } from "@/components/admin/AuthButtons";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -41,17 +41,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
           <KnovoWordmark />
-          <nav className="flex items-center gap-1 text-sm">
-            <Link href="/admin" className="rounded-md px-3 py-1.5 text-neutral-600 hover:bg-neutral-100">
-              Queue
-            </Link>
-            <Link href="/admin/library" className="rounded-md px-3 py-1.5 text-neutral-600 hover:bg-neutral-100">
-              Library
-            </Link>
-            <Link href="/admin/moderation" className="rounded-md px-3 py-1.5 text-neutral-600 hover:bg-neutral-100">
-              Discussion
-            </Link>
-          </nav>
+          <AdminNav />
           <div className="ml-auto flex items-center gap-3">
             <span className="hidden text-xs text-neutral-400 sm:inline">{ctx.user.email}</span>
             <SignOutButton />

@@ -10,6 +10,10 @@ expanded status lifecycle, admin `comments`/directives, `revisions` history, `se
 denormalized onto the comment row, RLS perf, FK indexes). Note the two comment tables are
 distinct: admin-only `comments` (control signals) vs. public `reader_comments` (social).)*
 
+*(Amended 2026-06-23 — `0008_routine_settings` added two admin-only dashboard-config tables,
+`routine_configs` and `app_settings`, for the in-HUD routine-trigger settings (BYOK). They sit
+outside the worker API + slot schema and are never touched by workers.)*
+
 ## Tables
 
 ### profiles
@@ -121,6 +125,18 @@ Reader-owned tables, **outside** the worker API + slot schema (the worker surfac
 - **subscriptions** `(id, user_id FK→profiles, scope='all', created_at, UNIQUE(user_id,scope))` —
   records intent; RSS now, email later.
 
+## Dashboard config *(0008 — admin-only, BYOK routine triggers)*
+Admin-managed config for the dashboard "run now" dispatch, **outside** the worker API + slot
+schema. `fireWorker()` reads these DB-first, falling back to env. The token is read only
+server-side and never returned to the browser (the UI masks it to `••••last4`).
+- **routine_configs** `(worker text PK check in (scout|editor|keeper), fire_url text, token text,
+  updated_by uuid FK→auth.users, updated_at timestamptz)` — one row per worker; the per-routine API
+  fire-trigger URL + bearer token. `updated_at` stamped by the shared trigger.
+- **app_settings** `(key text PK, value text, updated_by uuid FK→auth.users, updated_at timestamptz)`
+  — small admin-only key/value; holds `knovo_api_base` (reference for the setup guide).
+
+Both are **admin-only** (RLS `is_admin()`, no anon grant); the trusted server reads via service_role.
+
 ## Status lifecycle *(amended 2026-06-22)*
 ```
   draft ─► needs_review ⇄ changes_requested ─► approved ─► published
@@ -153,6 +169,8 @@ governance is enforced in the API, not RLS.**
 - `sources` / `artifact_sources`: public reads rows tied to a live published artifact.
 - `series`: public SELECT; admin writes.
 - `comments` / `revisions` / `audit_log`: admin-only (no anon); written by the API.
+- `routine_configs` / `app_settings`: admin-only (no anon); the token is read only server-side
+  (service_role) and never sent to the browser.
 - `bookmarks` / `subscriptions`: private to the owner (`user_id = auth.uid()`).
 - `reader_comments`: anon SELECT of `status='visible'` on a live published artifact; author
   inserts/edits/deletes own; admin moderates any. Author display is denormalized on the row, so

@@ -5,6 +5,7 @@ import { requireAdmin } from "./guard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { audit } from "@/lib/worker-api";
 import { fireWorker, type WorkerId } from "@/lib/routines";
+import { isAllowedFireUrl, FIRE_URL_REQUIREMENT } from "@/lib/routine-url";
 import type { Database } from "@/lib/database.types";
 
 type Status = Database["public"]["Enums"]["artifact_status"];
@@ -131,6 +132,68 @@ export async function moderateReaderComment(input: {
     });
     revalidatePath("/admin/moderation");
     if (input.slug) revalidatePath(`/a/${input.slug}`);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Failed." };
+  }
+}
+
+// Save a worker routine's fire trigger (dashboard BYOK config). The token is write-only from the
+// UI: an empty `token` leaves the stored one unchanged; `clearToken` unsets it. The secret value is
+// never echoed back and never written to the audit log (only which fields changed). See
+// lib/admin/settings.ts for the masked read side.
+export async function saveRoutineConfig(input: {
+  worker: WorkerId;
+  fireUrl: string;
+  token?: string;
+  clearToken?: boolean;
+}): Promise<Result> {
+  try {
+    const { user } = await requireAdmin();
+    const fireUrl = input.fireUrl.trim();
+    if (fireUrl && !isAllowedFireUrl(fireUrl)) {
+      return { ok: false, error: FIRE_URL_REQUIREMENT };
+    }
+    const db = createAdminClient();
+    const row: Database["public"]["Tables"]["routine_configs"]["Insert"] = {
+      worker: input.worker,
+      fire_url: fireUrl || null,
+      updated_by: user.id,
+    };
+    const token = input.token?.trim();
+    const changed = ["fire_url"];
+    if (input.clearToken) {
+      row.token = null;
+      changed.push("token:cleared");
+    } else if (token) {
+      row.token = token;
+      changed.push("token:set");
+    }
+    const { error } = await db.from("routine_configs").upsert(row, { onConflict: "worker" });
+    if (error) return { ok: false, error: error.message };
+    await audit(db, `admin:${user.id}`, `config:routine:${input.worker}`, null, { changed });
+    revalidatePath("/admin/settings");
+    revalidatePath("/admin");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Failed." };
+  }
+}
+
+// Save a global app setting (currently only `knovo_api_base`). Not a secret — surfaced in the
+// setup guide as reference; dispatch uses each routine's fire URL, not this value.
+export async function saveAppSetting(input: { key: "knovo_api_base"; value: string }): Promise<Result> {
+  try {
+    const { user } = await requireAdmin();
+    if (input.key !== "knovo_api_base") return { ok: false, error: "Unknown setting." };
+    const value = input.value.trim();
+    const db = createAdminClient();
+    const { error } = await db
+      .from("app_settings")
+      .upsert({ key: input.key, value: value || null, updated_by: user.id }, { onConflict: "key" });
+    if (error) return { ok: false, error: error.message };
+    await audit(db, `admin:${user.id}`, `config:app:${input.key}`, null, {});
+    revalidatePath("/admin/settings");
     return { ok: true };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Failed." };

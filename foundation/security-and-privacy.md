@@ -15,6 +15,26 @@
   `deployment.md`).
 - Browser-safe values use the `NEXT_PUBLIC_` prefix (Supabase URL, anon key). Everything
   else is server-only.
+- **Operator-set runtime secrets may live in the DB, not the repo.** Admin-managed routine-trigger
+  credentials set in `/admin/settings` are stored in `routine_configs`/`app_settings` (`0008`) —
+  still zero secrets in the repo (Decision 8, amended 2026-06-23). See below.
+
+## Dashboard-stored routine secrets (BYOK) *(0008, amended 2026-06-23)*
+The admin can store each worker routine's **fire-trigger URL + bearer token** (and the global
+`KNOVO_API_BASE`) in the HUD instead of redeploying env vars. The posture:
+- **Admin-only at rest.** `routine_configs`/`app_settings` have RLS `is_admin()` and no anon grant.
+- **Server-only reads, never to the browser.** The token is read only via service-role server code
+  (`fireWorker`, `getRoutineSettings`); the settings page returns a **masked** view (`••••last4` +
+  a `source` flag), never the token itself. The save action is write-only for the token (blank =
+  keep, explicit clear = unset) and never echoes or audit-logs the value.
+- **Token-exfiltration guard.** Both the save action and `fireWorker` validate the fire URL with
+  `isAllowedFireUrl` (https + an Anthropic/Claude host allowlist) before the token is ever sent, so
+  a mistyped or wrong URL cannot leak it.
+- **Audited.** Every change writes an `audit_log` entry (`config:routine:<worker>` / `config:app:*`)
+  recording which fields changed — never the secret.
+- **Env fallback.** Dispatch resolves DB-first, falling back to `ROUTINE_*` env vars.
+- **Deferred:** encryption-at-rest for the stored token (acceptable for a single-admin HUD;
+  `BACKLOG.md`).
 
 ## The service-role key is server-only (used only inside the Knovo API)
 - `SUPABASE_SERVICE_ROLE_KEY` bypasses RLS. It is a **server-only** env var in Vercel,
@@ -57,6 +77,7 @@ and bypasses RLS — governance is enforced in the API instead).
 | sources / artifact_sources | SELECT (tied to a live published artifact) | full | insert/read |
 | series | SELECT all | full | create/attach |
 | comments / revisions / audit_log | — | read (admin) / write comments | API-only |
+| routine_configs / app_settings | — | admin CRUD (token read server-side only, masked in UI) | — |
 | bookmarks / subscriptions | — | owner CRUD (`user_id = auth.uid()`) | — |
 | reader_comments | SELECT `status='visible'` on a live published artifact | author CRUD own; **admin moderates any** | — |
 
@@ -93,4 +114,6 @@ and holds its `KNOVO_WORKER_TOKEN_*` as an env var. See `docs/routines.md`.
   whether admin **dashboard** actions also need richer audit beyond `reviewed_by`/`reviewed_at`.
   Trigger: first need to answer "which admin changed this and when" in detail.
 - Worker-token rotation/storage hardening (hashed at rest vs. env compare). Trigger: more
-  workers, or a token-exposure scare.
+  workers, or a token-exposure scare. *(Now also covers the DB-stored routine-trigger token in
+  `routine_configs` — plaintext at rest, mitigated by admin-only RLS + server-only reads + masked
+  UI; encryption-at-rest deferred to the same trigger.)*
