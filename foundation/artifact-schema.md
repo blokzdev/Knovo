@@ -38,9 +38,10 @@ Discriminated union on `kind`:
     ],
     "initialCamera": { "preset": "overview" } }
   ```
-- **`diagram`** (rendered with tldraw):
+- **`diagram`** (rendered read-only as a static SVG via tldraw's `TldrawImage`, then wrapped in a
+  lightweight pan/zoom container — no tldraw editor is mounted; no params in v1):
   ```jsonc
-  { "id": "stage", "kind": "diagram", "snapshot": { /* tldraw store snapshot */ } }
+  { "id": "stage", "kind": "diagram", "snapshot": { /* tldraw store snapshot: { store, schema } */ } }
   ```
 - **`chart`**:
   ```jsonc

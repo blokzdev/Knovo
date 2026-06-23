@@ -68,5 +68,9 @@ export function InteractiveStage({ stage, controls }: { stage: Stage; controls: 
       </div>
     );
   }
-  return <DiagramStage />;
+  if (stage.kind === "diagram") {
+    // Diagram has no controls in v1 (read-only), so no ControlsBar.
+    return <DiagramStage stage={stage} />;
+  }
+  return null;
 }

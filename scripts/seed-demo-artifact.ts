@@ -16,6 +16,10 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "../lib/database.types";
 import { CURRENT_SCHEMA_VERSION, safeParseArtifactDoc } from "../lib/artifact-schema";
+// A small, valid tldraw store snapshot ({ store, schema }) generated once with tldraw's own
+// schema (@tldraw/tlschema + @tldraw/store) so it round-trips through <TldrawImage>. Embedded as
+// data, not regenerated here (tldraw is browser-only). See components/renderer/DiagramCanvas.tsx.
+import diagramSnapshot from "./diagram-demo-snapshot.json";
 
 type DemoSource = {
   db: "pdb" | "chembl" | "pubmed" | "biorxiv";
@@ -160,7 +164,71 @@ const CHART_DEMO: Demo = {
   ],
 };
 
-const DEMOS: Demo[] = [STRUCTURE_DEMO, CHART_DEMO];
+// ── Demo 3: diagram — exercises the tldraw `diagram` stage, rendered read-only as a static SVG
+//    (made pan/zoomable, no editor mounted). A simple mechanism schematic: BCR-ABL drives the
+//    signaling that imatinib blocks — complements the imatinib chart demo. Source-grounded. ─────
+const DIAGRAM_DEMO: Demo = {
+  slug: "demo-imatinib-bcr-abl-mechanism",
+  doc: {
+    schemaVersion: 1,
+    title: "How imatinib shuts down BCR-ABL signaling in chronic myeloid leukemia",
+    summary:
+      "Chronic myeloid leukemia is driven by the constitutively active BCR-ABL fusion tyrosine kinase. Imatinib is an ATP-competitive inhibitor that blocks BCR-ABL, halting the downstream signaling that drives proliferation (Braun, Eide & Druker, Cancer Cell 2020).",
+    stage: {
+      id: "stage",
+      kind: "diagram",
+      snapshot: diagramSnapshot,
+    },
+    panels: [
+      {
+        id: "moa",
+        kind: "prose",
+        content:
+          "In chronic myeloid leukemia (CML), the Philadelphia-chromosome **BCR-ABL** fusion produces a constitutively active tyrosine kinase that drives uncontrolled proliferation. **Imatinib** binds the ABL kinase's ATP pocket (ATP-competitive inhibition), switching off this signaling — the founding example of a molecularly targeted cancer therapy.",
+      },
+      {
+        id: "facts",
+        kind: "keyvalue",
+        content: [
+          { k: "Driver", v: "BCR-ABL fusion tyrosine kinase" },
+          { k: "Drug", v: "Imatinib (ATP-competitive TKI)" },
+          { k: "Disease", v: "Chronic myeloid leukemia" },
+          { k: "Read the affinity story", v: "See the imatinib kinase-selectivity chart demo" },
+        ],
+      },
+    ],
+    controls: [],
+    captions: [
+      {
+        id: "cap-moa",
+        target: "stage",
+        text: "Imatinib blocks BCR-ABL at the top of the cascade, so substrate phosphorylation and the resulting proliferation never proceed.",
+      },
+    ],
+  },
+  sources: [
+    {
+      db: "pubmed",
+      uid: "32289275",
+      url: "https://pubmed.ncbi.nlm.nih.gov/32289275/",
+      title: "Response and Resistance to BCR-ABL1-Targeted Therapies",
+      role: "primary",
+      citation_text:
+        "Braun TP, Eide CA, Druker BJ. Response and Resistance to BCR-ABL1-Targeted Therapies. Cancer Cell. 2020;37(4):530–542. PMID 32289275. doi:10.1016/j.ccell.2020.03.006.",
+    },
+    {
+      db: "chembl",
+      uid: "CHEMBL941",
+      url: "https://www.ebi.ac.uk/chembl/compound_report_card/CHEMBL941/",
+      title: "Imatinib — ChEMBL compound record",
+      role: "supporting",
+      citation_text:
+        "Imatinib (CHEMBL941): ATP-competitive BCR-ABL/ABL1 tyrosine-kinase inhibitor. EMBL-EBI ChEMBL database (v34).",
+    },
+  ],
+};
+
+const DEMOS: Demo[] = [STRUCTURE_DEMO, CHART_DEMO, DIAGRAM_DEMO];
 
 async function main() {
   // --print: validate each demo against the schema and emit it as JSON; no DB access. Useful as a
