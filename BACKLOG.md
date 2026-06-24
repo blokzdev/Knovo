@@ -32,6 +32,7 @@ mirrors into the Open questions section here.
 | **Public read site wiring** | ✅ Delivered (Phase 1c, 2026-06-22): public `app/(site)/a/[slug]` SSR-renders live artifacts via the shared `<ArtifactRenderer>` with `generateMetadata` + JSON-LD; `/explore`, RSS, sitemap, robots. Verified end-to-end against local Supabase (2026-06-23). | — (done) |
 | **Admin HUD activity elevation** | ✅ Delivered (2026-06-24): shared mobile-first activity system (`components/admin/activity/*`) — run-grouped feed with **Claude session deep links** (`routine_runs`, `0010`), human actor/action chips, audit detail rendering, **revision diff + restore**, modernized directives, across HUD home / review page / library / moderation / settings. Plan of record: `docs/admin-hud.md`. | — (done) |
 | **Admin manual full-doc editing** | **Partly delivered (2026-06-24):** restore-revision lets the admin re-apply any prior version (governed: re-validated, snapshotted, audited) — the first admin manual edit. Still deferred: an in-dashboard **slot editor** to hand-author content without a worker. | Admin needs to edit slots directly without a worker. |
+| **Observability — admin Insights view (Phase 2)** | ✅ Delivered (2026-06-24): `/admin/insights` — pipeline flow, per-day throughput, median draft→publish, run health (+ Claude session links), and the **drops** the governed API previously suppressed silently. The worker create path now logs `dedup_suppressed` (409) + `validation_rejected` (422) as **audit-only** rows (no mutation, no publish-gate/scope change, no migration), making "validation drops, dedup hits" countable. Pure, unit-tested aggregation in `lib/admin/insights.ts`. Verified locally: light+dark desktop screenshots + the live 422/409 drop path. | — (done) |
 | **Activity-system follow-ons** | Deferred from the HUD elevation (2026-06-24): **explicit per-action `run_id`** (the worker echoes its run id so every audit row links to its run precisely, fixing concurrent same-worker run mis-grouping and covering scheduled runs — read-time correlation is the current best-effort); a **TONES light/dark contrast audit** (red/brand are AA-edge in light); a **mobile touch-target pass** for `sm` buttons (DispatchButton ~32px vs 44px); contextual **kebab menus** on activity/flag rows; `parseActor` UUID validation. | More workers/admins, a contrast/a11y pass, or concurrent-run mis-grouping observed in practice. |
 | **Fully-autonomous publish worker** | Current model requires an admin directive to publish. A worker that publishes without per-item direction is possible but deliberately not built. | Admin trusts the pipeline enough to drop the per-item publish gate. |
 | **File attachments to worker directives** | The routine API trigger payload is text-only (no files). Admin file hand-off would go via storage + a referenced URL. | Admin needs to attach a file/image to a directive. |
@@ -81,8 +82,10 @@ mirrors into the Open questions section here.
 ### agent-architecture.md
 - Discovery ranking: which finding to pick when several qualify. *Trigger:* drafts skew to
   low-value findings.
-- Surface validation failures to the admin vs. silent stop. *Trigger:* suspicion that good
-  findings are silently dropped.
+- **Resolved (2026-06-24):** validation failures + dedup hits are no longer a silent stop — the
+  worker create path logs `validation_rejected` / `dedup_suppressed` as audit-only rows, surfaced
+  on the admin **Insights** view (`/admin/insights`). Open follow-on: whether a sustained
+  validation-failure rate should alert (vs. just being charted). *Trigger:* the rate climbs.
 
 ### worker-harness.md
 - **Supervisor trigger default** — schedule vs github-event vs manual, and whether it ever needs a

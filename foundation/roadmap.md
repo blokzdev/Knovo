@@ -87,10 +87,16 @@ BYOK), and have the real Claude routines author the first admin-published artifa
 comments/directs in the HUD, and the Editor iterates and publishes on direction; the published
 artifact renders responsively at a clean URL and is indexable.
 
-## Phase 2 — Validate & harden (sketch)
-- Cadence/volume tuning; discovery ranking.
-- Observability for the routine (validation drops, dedup hits).
-- Audience signal (are niche practitioners returning?).
+## Phase 2 — Validate & harden (in progress)
+- **Observability (DONE 2026-06-24):** the admin **Insights** view (`/admin/insights`) — pipeline
+  flow, per-day throughput, median draft→publish, run health (with Claude session links), and the
+  **drops** the governed API previously suppressed silently. The worker create path now logs
+  `dedup_suppressed` (409 duplicate/rejected source) + `validation_rejected` (422 zod) as
+  audit-only rows (no mutation, no gate/scope change, no migration), so "validation drops, dedup
+  hits" are finally countable. Pure aggregation in `lib/admin/insights.ts` (unit-tested).
+- Cadence/volume tuning (operator Schedule triggers) + discovery ranking — best tuned once Insights
+  has surfaced what the loop actually drafts. Still open.
+- Audience signal (are niche practitioners returning?). Still open.
 
 ## Phase 3 — Site experience & public presence (sketch)
 A focused design pass on everything *around* the artifacts, once the content engine is
