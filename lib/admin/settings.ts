@@ -1,5 +1,6 @@
 import { requireAdmin } from "./guard";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAllowedFireUrl } from "@/lib/routine-url";
 import type { WorkerId } from "@/lib/routines";
 
 // Server-only reader for the admin settings page. NOT a "use server" action: keeping it a plain
@@ -23,6 +24,9 @@ export type RoutineSetting = {
   hasToken: boolean;
   tokenLast4: string | null;
   source: ConfigSource;
+  // Whether the resolved fire URL (db OR env) passes the Claude-host allowlist. Computed server-side
+  // so the dashboard can flag a misconfigured trigger WITHOUT ever shipping the env URL to the client.
+  fireUrlValid: boolean;
   updatedAt: string | null;
 };
 
@@ -50,8 +54,12 @@ export async function getRoutineSettings(): Promise<RoutineSettings> {
     const row = byWorker.get(worker);
     const dbUrl = row?.fire_url ?? null;
     const dbToken = row?.token ?? null;
-    const envComplete = !!process.env[ENV[worker].url] && !!process.env[ENV[worker].token];
+    const envUrl = process.env[ENV[worker].url];
+    const envComplete = !!envUrl && !!process.env[ENV[worker].token];
     const source: ConfigSource = dbUrl && dbToken ? "db" : envComplete ? "env" : "none";
+    // Validate whichever URL dispatch will actually use (fireWorker checks both db + env the same way).
+    const fireUrlValid =
+      source === "db" ? isAllowedFireUrl(dbUrl ?? "") : source === "env" ? isAllowedFireUrl(envUrl ?? "") : false;
     return {
       worker,
       fireUrl: dbUrl ?? "",
@@ -59,6 +67,7 @@ export async function getRoutineSettings(): Promise<RoutineSettings> {
       // Masked: only the last 4 chars ever leave the server, never the token itself.
       tokenLast4: dbToken ? dbToken.slice(-4) : null,
       source,
+      fireUrlValid,
       updatedAt: row?.updated_at ?? null,
     };
   });

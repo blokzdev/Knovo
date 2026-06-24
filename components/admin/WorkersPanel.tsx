@@ -1,35 +1,44 @@
-import { TONES, WORKER_META, type WorkerId } from "@/lib/admin/labels";
-import { cn } from "@/lib/utils";
-import { Card, CardContent } from "@/components/ui/card";
-import { WORKER_ICONS } from "./activity/icons";
-import { DispatchButton } from "./DispatchButton";
+import { createClient } from "@/lib/supabase/server";
+import { getRoutineSettings } from "@/lib/admin/settings";
+import { deriveWorkerStatus, type LastRun } from "@/lib/admin/worker-state";
+import type { WorkerId } from "@/lib/admin/labels";
+import { WorkerCard } from "./WorkerCard";
 
 const WORKERS: WorkerId[] = ["scout", "editor", "keeper"];
 
-export function WorkersPanel() {
+// Dashboard dispatch panel. State-aware: each worker's card reflects whether its routine is wired,
+// not-yet-configured, or broken (from getRoutineSettings' `source` + the latest routine_runs row),
+// so the action gates gracefully instead of firing an unconfigured worker into an error toast.
+export async function WorkersPanel() {
+  const supabase = createClient();
+  // Fetch the latest run PER worker deterministically (one tiny query each), so a chatty worker can't
+  // push a quieter worker's last run out of a shared window and mask its real state.
+  const [settings, ...runResults] = await Promise.all([
+    getRoutineSettings(),
+    ...WORKERS.map((w) =>
+      supabase
+        .from("routine_runs")
+        .select("status, started_at, session_url, error")
+        .eq("worker", w)
+        .order("started_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ),
+  ]);
+
+  const latest = new Map<string, LastRun>();
+  WORKERS.forEach((w, i) => latest.set(w, (runResults[i]?.data ?? null) as LastRun));
+  const byWorker = new Map(settings.routines.map((s) => [s.worker, s]));
+
   return (
     <div className="grid gap-3 sm:grid-cols-3">
       {WORKERS.map((w) => {
-        const Icon = WORKER_ICONS[w];
-        return (
-          <Card key={w}>
-            <CardContent className="flex flex-col gap-2 p-4">
-              <div className="flex items-center gap-2">
-                <span
-                  className={cn(
-                    "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md border",
-                    TONES[WORKER_META[w].tone],
-                  )}
-                >
-                  <Icon className="h-4 w-4" aria-hidden />
-                </span>
-                <span className="text-sm font-semibold">{WORKER_META[w].label}</span>
-              </div>
-              <p className="text-xs text-muted-foreground">{WORKER_META[w].blurb}</p>
-              <DispatchButton worker={w} className="mt-1 w-full" />
-            </CardContent>
-          </Card>
+        const setting = byWorker.get(w);
+        const status = deriveWorkerStatus(
+          { source: setting?.source ?? "none", fireUrlValid: setting?.fireUrlValid ?? false },
+          latest.get(w) ?? null,
         );
+        return <WorkerCard key={w} worker={w} status={status} />;
       })}
     </div>
   );
