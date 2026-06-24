@@ -39,9 +39,13 @@ export function RunGroup({
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          className={cn("flex items-center gap-1.5 rounded-md text-sm font-medium", focusRing)}
+          aria-label={`${open ? "Collapse" : "Expand"} ${worker?.label ?? run.worker} run`}
+          className={cn("-ml-2 flex min-h-10 items-center gap-1.5 rounded-md px-2 text-sm font-medium", focusRing)}
         >
-          <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", !open && "-rotate-90")} aria-hidden />
+          <ChevronDown
+            className={cn("h-4 w-4 shrink-0 motion-safe:transition-transform", !open && "-rotate-90")}
+            aria-hidden
+          />
           <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
           <span>{worker?.label ?? run.worker} run</span>
         </button>
@@ -56,8 +60,9 @@ export function RunGroup({
             href={run.session_url}
             target="_blank"
             rel="noreferrer"
+            aria-label="Open the Claude session (opens in a new tab)"
             className={cn(
-              "inline-flex items-center gap-1 rounded-md text-xs font-medium text-brand hover:underline",
+              "inline-flex min-h-10 items-center gap-1 rounded-md text-xs font-medium text-brand hover:underline",
               focusRing,
             )}
           >
@@ -66,6 +71,7 @@ export function RunGroup({
         )}
         <time
           dateTime={run.started_at}
+          aria-label={`Started ${new Date(run.started_at).toLocaleString()}`}
           title={new Date(run.started_at).toLocaleString()}
           className="ml-auto whitespace-nowrap text-xs tabular-nums text-muted-foreground"
         >

@@ -7,6 +7,7 @@ import { WorkersPanel } from "@/components/admin/WorkersPanel";
 import { ActivityRow } from "@/components/admin/activity/ActivityRow";
 import { RunGroup } from "@/components/admin/activity/RunGroup";
 import { groupActivityIntoRuns, type ActivityEvent, type RunRow } from "@/lib/admin/activity";
+import { resolveActorProfiles } from "@/lib/admin/profiles";
 import { SEVERITY_CLS, STATUS_META, STATUS_ORDER, TONES, type Status } from "@/lib/admin/labels";
 import { EmptyState, PageHeader, SectionHeading, StatCard } from "@/components/common/layout";
 import { cn, focusRing } from "@/lib/utils";
@@ -67,6 +68,7 @@ export default async function QueuePage() {
     (activity ?? []) as ActivityEvent[],
     (runs ?? []) as RunRow[],
   );
+  const profiles = await resolveActorProfiles(supabase, (activity ?? []).map((a) => a.actor));
   const hrefFor = (r: ActivityEvent) => (r.artifact_id ? `/admin/a/${r.artifact_id}` : undefined);
 
   return (
@@ -176,7 +178,7 @@ export default async function QueuePage() {
                 <RunGroup key={g.run.id} run={g.run} count={g.rows.length}>
                   {g.rows.map((r) => (
                     <li key={r.id}>
-                      <ActivityRow row={r} currentUserId={currentUserId} href={hrefFor(r)} />
+                      <ActivityRow row={r} profiles={profiles} currentUserId={currentUserId} href={hrefFor(r)} />
                     </li>
                   ))}
                 </RunGroup>
@@ -185,7 +187,7 @@ export default async function QueuePage() {
                   <ul className="divide-y divide-border">
                     {g.rows.map((r) => (
                       <li key={r.id}>
-                        <ActivityRow row={r} currentUserId={currentUserId} href={hrefFor(r)} />
+                        <ActivityRow row={r} profiles={profiles} currentUserId={currentUserId} href={hrefFor(r)} />
                       </li>
                     ))}
                   </ul>

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "./guard";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { audit } from "@/lib/worker-api";
+import { audit, snapshotRevision } from "@/lib/worker-api";
+import { safeParseArtifactDoc } from "@/lib/artifact-schema";
 import { fireWorker, type WorkerId } from "@/lib/routines";
 import { isAllowedFireUrl, FIRE_URL_REQUIREMENT } from "@/lib/routine-url";
 import type { Database } from "@/lib/database.types";
@@ -88,6 +89,55 @@ export async function setStatus(input: { artifactId: string; to: Status; reason?
     const { error } = await db.from("artifacts").update(patch).eq("id", input.artifactId);
     if (error) return { ok: false, error: error.message };
     await audit(db, `admin:${user.id}`, `status:${input.to}`, input.artifactId, { reason: input.reason ?? null });
+    revalidateArtifact(input.artifactId);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Failed." };
+  }
+}
+
+// Restore a prior revision as the artifact's current doc. Governed like any admin write: re-validates
+// the revision doc against the schema (invariant #3), snapshots the CURRENT doc first (so a restore is
+// itself recoverable), updates in place, and audits. Does NOT change public status — re-exposing edits
+// to a published artifact still goes through the normal publish gate.
+export async function restoreRevision(input: { artifactId: string; revisionId: string }): Promise<Result> {
+  try {
+    const { user } = await requireAdmin();
+    const db = createAdminClient();
+    const { data: rev } = await db
+      .from("revisions")
+      .select("id, artifact_id, schema_version, doc, title, summary")
+      .eq("id", input.revisionId)
+      .maybeSingle();
+    if (!rev || rev.artifact_id !== input.artifactId) return { ok: false, error: "Revision not found." };
+
+    const { data: cur } = await db
+      .from("artifacts")
+      .select("id, schema_version, doc, title, summary")
+      .eq("id", input.artifactId)
+      .maybeSingle();
+    if (!cur) return { ok: false, error: "Artifact not found." };
+
+    const parsed = safeParseArtifactDoc(rev.schema_version, rev.doc);
+    if (!parsed.success) return { ok: false, error: "That revision's document no longer passes validation." };
+
+    await snapshotRevision(db, cur, `admin:${user.id}`, "pre-restore snapshot");
+    const { error } = await db
+      .from("artifacts")
+      .update({
+        doc: parsed.data as never,
+        title: parsed.data.title,
+        summary: parsed.data.summary,
+        schema_version: rev.schema_version,
+      })
+      .eq("id", input.artifactId);
+    if (error) return { ok: false, error: error.message };
+
+    await audit(db, `admin:${user.id}`, "restore_revision", input.artifactId, {
+      revision_id: input.revisionId,
+      from_schema: cur.schema_version,
+      to_schema: rev.schema_version,
+    });
     revalidateArtifact(input.artifactId);
     return { ok: true };
   } catch (e) {
@@ -245,10 +295,14 @@ export async function dispatchWorker(input: {
     }
 
     if (runId) {
-      await db
-        .from("routine_runs")
-        .update({ session_id: res.claude_code_session_id, session_url: res.claude_code_session_url })
-        .eq("id", runId);
+      try {
+        await db
+          .from("routine_runs")
+          .update({ session_id: res.claude_code_session_id, session_url: res.claude_code_session_url })
+          .eq("id", runId);
+      } catch {
+        // best-effort: the worker fired successfully; only persisting the session link failed.
+      }
     }
     await audit(
       db,

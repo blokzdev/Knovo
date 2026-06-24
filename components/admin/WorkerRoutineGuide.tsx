@@ -1,21 +1,17 @@
-import { ChevronRight, PencilLine, ShieldCheck, Telescope, type LucideIcon } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import type { WorkerId } from "@/lib/routines";
 import { WORKER_ROUTINES } from "@/lib/workers/routines";
 import { Badge } from "@/components/ui/badge";
 import { CodeBlock } from "@/components/common/CodeBlock";
 import { CopyButton } from "@/components/ui/copy-button";
+import { WORKER_ICONS } from "./activity/icons";
 
 // Per-worker routine setup guidance for /admin/settings: how to configure THIS routine in the
 // Claude web app — name, connectors, triggers, verb scope, env token — plus the paste-ready system
 // prompt (copyable) behind a disclosure. All text is sourced from lib/workers/routines.ts, which is
 // drift-guarded against docs/routines.md. Composes into the client settings tabs.
-// Per-worker icon (also reused by the settings tabs). Kept out of the data registry so it stays
-// pure/serializable and drift-testable.
-export const WORKER_ICONS: Record<WorkerId, LucideIcon> = {
-  scout: Telescope,
-  editor: PencilLine,
-  keeper: ShieldCheck,
-};
+// Re-exported for the settings tabs; canonical definition lives in ./activity/icons.
+export { WORKER_ICONS };
 
 export function WorkerRoutineGuide({ worker }: { worker: WorkerId }) {
   const w = WORKER_ROUTINES[worker];

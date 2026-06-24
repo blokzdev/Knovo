@@ -48,6 +48,7 @@ export function ActivityRow({
         {rightSlot}
         <time
           dateTime={row.created_at}
+          aria-label={new Date(row.created_at).toLocaleString()}
           title={new Date(row.created_at).toLocaleString()}
           className="whitespace-nowrap text-xs tabular-nums text-muted-foreground"
         >

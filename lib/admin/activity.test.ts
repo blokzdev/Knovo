@@ -49,7 +49,11 @@ describe("describeAction", () => {
     ["soft_delete", "Moved to trash", "trash"],
     ["restore", "Restored from trash", "untrash"],
     ["flag:warn", "Flagged (warn)", "flag"],
-    ["reader_comment:hidden", "Moderated comment", "moderate"],
+    ["reader_comment:removed", "Removed comment", "moderate"],
+    ["reader_comment:hidden", "Hidden comment", "moderate"],
+    ["reader_comment:visible", "Restored comment", "moderate"],
+    ["series_create", "Created series", "directive"],
+    ["series_attach", "Added to series", "directive"],
     ["config:routine:editor", "Updated config", "config"],
   ] as const)("maps %s → %s", (action, label, icon) => {
     const info = describeAction(action);

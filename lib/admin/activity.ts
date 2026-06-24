@@ -97,7 +97,13 @@ export function describeAction(action: string): ActionInfo {
     case "flag":
       return { label: tail ? `Flagged (${tail})` : "Flagged", tone: SEVERITY_TONE[tail] ?? "amber", icon: "flag" };
     case "reader_comment":
-      return { label: "Moderated comment", tone: tail === "removed" ? "red" : "zinc", icon: "moderate" };
+      if (tail === "removed") return { label: "Removed comment", tone: "red", icon: "moderate" };
+      if (tail === "hidden") return { label: "Hidden comment", tone: "amber", icon: "moderate" };
+      return { label: "Restored comment", tone: "emerald", icon: "moderate" };
+    case "series_create":
+      return { label: "Created series", tone: "sky", icon: "directive" };
+    case "series_attach":
+      return { label: "Added to series", tone: "sky", icon: "directive" };
     case "config":
       return { label: "Updated config", tone: "zinc", icon: "config" };
     default:
