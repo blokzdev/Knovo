@@ -118,6 +118,72 @@ export type AuditDetail = {
   severity?: string;
 };
 
+// ── Read-time run grouping ────────────────────────────────────────────────────
+// We correlate a worker's audit rows to a routine_runs row at READ time (no run identity is carried
+// by the worker today). A worker event belongs to the latest run for that worker started at/before
+// the event, within a window; the dispatch event itself carries run_id explicitly. Admin events and
+// orphans stay "loose". Future precision upgrade (explicit per-action run_id): see BACKLOG.md.
+export type RunRow = {
+  id: string;
+  worker: string;
+  status: string;
+  session_url: string | null;
+  started_at: string;
+  artifact_id?: string | null;
+};
+export type ActivityEvent = {
+  id: string;
+  actor: string | null;
+  action: string;
+  created_at: string;
+  detail?: unknown;
+  run_id?: string | null;
+};
+export type ActivityGroup = { run: RunRow | null; rows: ActivityEvent[] };
+
+const RUN_WINDOW_MS = 6 * 60 * 60 * 1000; // don't attach worker events more than 6h after a run started
+
+// `events` must be sorted newest-first (the order they render). Returns groups in that same order:
+// consecutive events sharing a run collapse into one run group; everything else collapses into loose
+// groups. Pure + deterministic (no Date.now()).
+export function groupActivityIntoRuns(events: ActivityEvent[], runs: RunRow[]): ActivityGroup[] {
+  const runsByWorker = new Map<string, RunRow[]>();
+  for (const r of runs) {
+    const list = runsByWorker.get(r.worker) ?? [];
+    list.push(r);
+    runsByWorker.set(r.worker, list);
+  }
+  for (const list of runsByWorker.values()) list.sort((a, b) => a.started_at.localeCompare(b.started_at));
+  const runById = new Map(runs.map((r) => [r.id, r] as const));
+
+  const runForEvent = (ev: ActivityEvent): RunRow | null => {
+    if (ev.run_id && runById.has(ev.run_id)) return runById.get(ev.run_id)!;
+    const info = parseActor(ev.actor);
+    if (info.kind !== "worker") return null;
+    const list = runsByWorker.get(info.worker) ?? [];
+    let chosen: RunRow | null = null;
+    for (const r of list) {
+      if (r.started_at <= ev.created_at) chosen = r;
+      else break;
+    }
+    if (chosen) {
+      const gap = new Date(ev.created_at).getTime() - new Date(chosen.started_at).getTime();
+      if (Number.isFinite(gap) && gap > RUN_WINDOW_MS) return null;
+    }
+    return chosen;
+  };
+
+  const groups: ActivityGroup[] = [];
+  for (const ev of events) {
+    const run = runForEvent(ev);
+    const last = groups[groups.length - 1];
+    if (run && last && last.run?.id === run.id) last.rows.push(ev);
+    else if (!run && last && last.run === null) last.rows.push(ev);
+    else groups.push({ run, rows: [ev] });
+  }
+  return groups;
+}
+
 // Safely narrow the unstructured detail JSONB to the fields the UI knows how to render.
 export function parseAuditDetail(detail: unknown): AuditDetail {
   if (!detail || typeof detail !== "object") return {};

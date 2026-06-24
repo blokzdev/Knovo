@@ -200,7 +200,9 @@ export async function saveAppSetting(input: { key: "knovo_api_base"; value: stri
   }
 }
 
-// Fire a worker routine on demand (dashboard "run now"). Returns the session URL to watch.
+// Fire a worker routine on demand (dashboard "run now"). Opens a routine_runs row so the run + its
+// Claude session is persisted and the worker's subsequent activity can be grouped under it in the
+// HUD. Returns the session URL to watch.
 export async function dispatchWorker(input: {
   worker: WorkerId;
   text?: string;
@@ -208,11 +210,55 @@ export async function dispatchWorker(input: {
 }): Promise<{ ok: true; sessionUrl: string } | { ok: false; error: string }> {
   try {
     const { user } = await requireAdmin();
-    const res = await fireWorker(input.worker, input.text);
     const db = createAdminClient();
-    await audit(db, `admin:${user.id}`, `dispatch:${input.worker}`, input.artifactId ?? null, {
-      session: res.claude_code_session_id,
-    });
+
+    // Open a run (best-effort: tolerate a missing routine_runs table on a pre-0010 DB).
+    let runId: string | null = null;
+    try {
+      const { data: run } = await db
+        .from("routine_runs")
+        .insert({
+          worker: input.worker,
+          status: "dispatched",
+          dispatched_by: user.id,
+          artifact_id: input.artifactId ?? null,
+          text_context: input.text?.slice(0, 2000) ?? null,
+        })
+        .select("id")
+        .single();
+      runId = run?.id ?? null;
+    } catch {
+      // pre-migration / insert error — proceed without run tracking.
+    }
+
+    let res;
+    try {
+      res = await fireWorker(input.worker, input.text);
+    } catch (e) {
+      if (runId) {
+        await db
+          .from("routine_runs")
+          .update({ status: "failed", error: e instanceof Error ? e.message : "dispatch failed", ended_at: new Date().toISOString() })
+          .eq("id", runId);
+      }
+      throw e;
+    }
+
+    if (runId) {
+      await db
+        .from("routine_runs")
+        .update({ session_id: res.claude_code_session_id, session_url: res.claude_code_session_url })
+        .eq("id", runId);
+    }
+    await audit(
+      db,
+      `admin:${user.id}`,
+      `dispatch:${input.worker}`,
+      input.artifactId ?? null,
+      { session: res.claude_code_session_id },
+      runId,
+    );
+    revalidatePath("/admin");
     if (input.artifactId) revalidateArtifact(input.artifactId);
     return { ok: true, sessionUrl: res.claude_code_session_url };
   } catch (e) {

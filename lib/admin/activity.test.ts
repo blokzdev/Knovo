@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { describeAction, parseActor, parseAuditDetail } from "./activity";
+import {
+  describeAction,
+  groupActivityIntoRuns,
+  parseActor,
+  parseAuditDetail,
+  type ActivityEvent,
+  type RunRow,
+} from "./activity";
 
 describe("parseActor", () => {
   it("resolves each worker to its label + tone", () => {
@@ -75,5 +82,56 @@ describe("parseAuditDetail", () => {
   });
   it("preserves explicit null reason/note", () => {
     expect(parseAuditDetail({ reason: null, note: null })).toMatchObject({ reason: null, note: null });
+  });
+});
+
+describe("groupActivityIntoRuns", () => {
+  const run = (id: string, worker: string, started_at: string): RunRow => ({
+    id,
+    worker,
+    status: "dispatched",
+    session_url: `https://claude.ai/s/${id}`,
+    started_at,
+  });
+  const ev = (id: string, actor: string, action: string, created_at: string, run_id?: string): ActivityEvent => ({
+    id,
+    actor,
+    action,
+    created_at,
+    run_id: run_id ?? null,
+  });
+
+  it("groups a worker's events (and the dispatch) under its run, leaving admin events loose", () => {
+    const runs = [run("r1", "editor", "2026-06-24T02:05:00Z")];
+    // newest-first, as rendered
+    const events = [
+      ev("e5", "worker:editor", "status:published", "2026-06-24T02:07:00Z"),
+      ev("e4", "worker:editor", "update", "2026-06-24T02:06:00Z"),
+      ev("e3", "admin:x", "dispatch:editor", "2026-06-24T02:05:00Z", "r1"),
+      ev("e2", "admin:x", "directive:revise", "2026-06-24T02:04:00Z"),
+      ev("e1", "worker:scout", "create_draft", "2026-06-24T01:57:00Z"),
+    ];
+    const groups = groupActivityIntoRuns(events, runs);
+    expect(groups).toHaveLength(2);
+    expect(groups[0].run?.id).toBe("r1");
+    expect(groups[0].rows.map((r) => r.id)).toEqual(["e5", "e4", "e3"]);
+    expect(groups[1].run).toBeNull();
+    expect(groups[1].rows.map((r) => r.id)).toEqual(["e2", "e1"]); // scout has no run → loose
+  });
+
+  it("attaches each worker event to the correct run when the same worker runs twice", () => {
+    const runs = [run("r1", "editor", "2026-06-24T02:05:00Z"), run("r2", "editor", "2026-06-24T03:00:00Z")];
+    const events = [
+      ev("b", "worker:editor", "update", "2026-06-24T03:05:00Z"),
+      ev("a", "worker:editor", "update", "2026-06-24T02:06:00Z"),
+    ];
+    const groups = groupActivityIntoRuns(events, runs);
+    expect(groups.map((g) => g.run?.id)).toEqual(["r2", "r1"]);
+  });
+
+  it("does not attach a worker event more than the window after its run started", () => {
+    const runs = [run("r1", "editor", "2026-06-24T02:05:00Z")];
+    const events = [ev("late", "worker:editor", "update", "2026-06-24T12:00:00Z")];
+    expect(groupActivityIntoRuns(events, runs)[0].run).toBeNull();
   });
 });
