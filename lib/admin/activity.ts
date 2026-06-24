@@ -72,6 +72,10 @@ export function describeAction(action: string): ActionInfo {
   switch (head) {
     case "create_draft":
       return { label: "Drafted", tone: "zinc", icon: "draft" };
+    case "dedup_suppressed":
+      return { label: "Skipped a duplicate", tone: "zinc", icon: "dismissed" };
+    case "validation_rejected":
+      return { label: "Draft failed validation", tone: "red", icon: "reject" };
     case "update":
       return { label: "Edited content", tone: "sky", icon: "edit" };
     case "restore_revision":
@@ -122,6 +126,7 @@ export type AuditDetail = {
   publish_after?: boolean;
   revision_id?: string;
   severity?: string;
+  source?: string;
 };
 
 // ── Read-time run grouping ────────────────────────────────────────────────────
@@ -206,5 +211,6 @@ export function parseAuditDetail(detail: unknown): AuditDetail {
     publish_after: typeof d.publish_after === "boolean" ? d.publish_after : undefined,
     revision_id: str(d.revision_id),
     severity: str(d.severity),
+    source: str(d.source),
   };
 }

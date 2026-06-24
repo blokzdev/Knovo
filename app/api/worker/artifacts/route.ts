@@ -44,6 +44,14 @@ export async function POST(req: Request) {
   }
   const { doc, sources } = parsed.data;
 
+  const db = createAdminClient();
+  // Observability (Phase 2): record drafts the API *rejects* (which leave no artifact) as audit-only
+  // rows so the HUD can count validation drops + dedup hits. Best-effort — logging never changes the
+  // response contract, and this writes nothing but an audit row (no content mutation; publish gate
+  // and scope wall untouched). See lib/admin/insights.ts.
+  const observe = (action: string, detail: Record<string, unknown>) =>
+    audit(db, `worker:${worker.id}`, action, null, detail).catch(() => {});
+
   const version = Number((doc as { schemaVersion?: number }).schemaVersion ?? CURRENT_SCHEMA_VERSION);
   const docCheck = safeParseArtifactDoc(version, doc);
   if (!docCheck.success) {
@@ -51,11 +59,10 @@ export async function POST(req: Request) {
       typeof docCheck.error === "string"
         ? docCheck.error
         : docCheck.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ");
+    await observe("validation_rejected", { reason: message.slice(0, 500) });
     return err(422, "invalid_document", message);
   }
   const validDoc = docCheck.data;
-
-  const db = createAdminClient();
 
   // Dedup the PRIMARY source against already-seen and previously-rejected findings.
   const primary = sources.find((s) => s.role === "primary")!;
@@ -63,8 +70,14 @@ export async function POST(req: Request) {
     db.from("rejected_source_keys").select("source_uid").eq("source_db", primary.db).eq("source_uid", primary.uid).maybeSingle(),
     db.from("seen_source_keys").select("source_uid").eq("source_db", primary.db).eq("source_uid", primary.uid).maybeSingle(),
   ]);
-  if (rejected) return err(409, "rejected_source", `Primary source ${primary.db}:${primary.uid} was previously rejected; not re-drafted.`);
-  if (seen) return err(409, "duplicate_source", `Primary source ${primary.db}:${primary.uid} is already covered by an existing artifact.`);
+  if (rejected) {
+    await observe("dedup_suppressed", { source: `${primary.db}:${primary.uid}`, reason: "rejected" });
+    return err(409, "rejected_source", `Primary source ${primary.db}:${primary.uid} was previously rejected; not re-drafted.`);
+  }
+  if (seen) {
+    await observe("dedup_suppressed", { source: `${primary.db}:${primary.uid}`, reason: "duplicate" });
+    return err(409, "duplicate_source", `Primary source ${primary.db}:${primary.uid} is already covered by an existing artifact.`);
+  }
 
   // Upsert sources (idempotent on the dedup key) and collect their ids.
   const sourceIds: { id: string; role: "primary" | "supporting"; citation_text?: string }[] = [];
