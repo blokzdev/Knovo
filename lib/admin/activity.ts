@@ -138,6 +138,7 @@ export type ActivityEvent = {
   created_at: string;
   detail?: unknown;
   run_id?: string | null;
+  artifact_id?: string | null;
 };
 export type ActivityGroup = { run: RunRow | null; rows: ActivityEvent[] };
 
