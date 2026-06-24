@@ -79,13 +79,19 @@ the real worker handlers through draft → dedup → publish-gate → public rea
 delete against a local Supabase stack, and the three demo artifacts + admin HUD were screenshot-
 verified (light + dark). See `docs/operational-validation.md`. The first real run fixed five
 blocking bugs (Keeper auth; `service_role` core grants `0009`; CRLF gate; `/apple-icon` build;
-SiteHeader hydration) — the value of running the loop. **Remaining to run it in production:** apply
-`0009` to the hosted project, set the worker tokens + routine fire URLs (`/admin/settings`, `0008`
-BYOK), and have the real Claude routines author the first admin-published artifact.
+SiteHeader hydration) — the value of running the loop.
 
-**Phase 1 gate (sketch):** a worker drafts a real finding via the API; the admin reviews,
+**Phase 1 gate — MET IN PRODUCTION (2026-06-24).** The full governed loop ran end-to-end on the
+hosted `knovo-prod` tenant with all three real Claude routines: **Scout** discovered + drafted a real
+finding via the API; the admin **directed** (`directive:revise`) in the HUD; the **Editor** iterated
+(7 updates) and **published on direction** — the first live artifact, *"De novo miniprotein dCX001
+antagonizes CXCR4 — a computationally designed GPCR blocker"*, renders at its clean URL
+(`/a/…`, HTTP 200) with `ScholarlyArticle` JSON-LD + OpenGraph (indexable); and **Keeper** swept the
+published sources (two clean sweeps, **0 flags**). The human-directed publish gate held throughout.
+
+**Phase 1 gate (criteria):** a worker drafts a real finding via the API; the admin reviews,
 comments/directs in the HUD, and the Editor iterates and publishes on direction; the published
-artifact renders responsively at a clean URL and is indexable.
+artifact renders responsively at a clean URL and is indexable. ✅ All met in prod.
 
 ## Phase 2 — Validate & harden (in progress)
 - **Observability (DONE 2026-06-24):** the admin **Insights** view (`/admin/insights`) — pipeline
@@ -94,8 +100,16 @@ artifact renders responsively at a clean URL and is indexable.
   `dedup_suppressed` (409 duplicate/rejected source) + `validation_rejected` (422 zod) as
   audit-only rows (no mutation, no gate/scope change, no migration), so "validation drops, dedup
   hits" are finally countable. Pure aggregation in `lib/admin/insights.ts` (unit-tested).
-- Cadence/volume tuning (operator Schedule triggers) + discovery ranking — best tuned once Insights
-  has surfaced what the loop actually drafts. Still open.
+- **Cadence (active next step):** flip the loop from hand-dispatched to autonomous — add **Schedule
+  triggers** to the worker routines (Scout daily @ ~1 draft/run per `vision.md`; Editor daily to clear
+  the directive queue; Keeper weekly). The first prod cycle was manual; validation = the loop running
+  on its own and accumulating a body of published explainers. Volume/ranking tuned from Insights data.
+- Discovery ranking — which finding Scout picks when several qualify (`agent-architecture.md`). Still open.
+- **Audience signal** — are niche practitioners finding + returning to the explainers? Still open;
+  needs a body of content + lightweight analytics first.
+
+> **Platform-horizon gate (still held).** GemBlog / multi-tenant (M1–M6) stays parked until this Phase 2
+> validation track record exists — Phase 1 working in prod is the *runway*, not the *climb*.
 - Audience signal (are niche practitioners returning?). Still open.
 
 ## Phase 3 — Site experience & public presence (sketch)
