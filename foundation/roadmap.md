@@ -72,11 +72,16 @@ RSS now, email later). Amended Decision #5. Schema `0005`; `0006` hardened it (a
 denormalized onto the comment row → no SECURITY DEFINER view; RLS `(select auth.uid())`; FK
 indexes — clean Supabase security advisors).
 
-**Phase 1 status:** code-complete (author → review → publish → public read → reader engagement).
-Remaining to *run* the loop end-to-end is operational: worker tokens in Vercel + a first
-worker-authored, admin-published artifact. The routine **fire URLs + tokens** can now be set by the
-admin in `/admin/settings` (`0008`, BYOK) instead of redeploying env vars. Next dev work is
-**1b-follow** (renderer hardening), now preceded by the design-system elevation PR.
+**Phase 1 status:** code-complete (author → review → publish → public read → reader engagement);
+renderer hardening, design-system elevation, and PR4 design follow-ons all shipped. The governed
+loop is now **operationally validated locally** (2026-06-23): a committed integration suite drives
+the real worker handlers through draft → dedup → publish-gate → public read → Keeper sweep → soft-
+delete against a local Supabase stack, and the three demo artifacts + admin HUD were screenshot-
+verified (light + dark). See `docs/operational-validation.md`. The first real run fixed five
+blocking bugs (Keeper auth; `service_role` core grants `0009`; CRLF gate; `/apple-icon` build;
+SiteHeader hydration) — the value of running the loop. **Remaining to run it in production:** apply
+`0009` to the hosted project, set the worker tokens + routine fire URLs (`/admin/settings`, `0008`
+BYOK), and have the real Claude routines author the first admin-published artifact.
 
 **Phase 1 gate (sketch):** a worker drafts a real finding via the API; the admin reviews,
 comments/directs in the HUD, and the Editor iterates and publishes on direction; the published
