@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/admin/StatusBadge";
+import { ActorBadge } from "@/components/admin/activity/ActorBadge";
 import { STATUS_ORDER, STATUS_META, type Status } from "@/lib/admin/labels";
 import { PageHeader } from "@/components/common/layout";
 import { cn, focusRing } from "@/lib/utils";
@@ -18,7 +19,7 @@ export default async function LibraryPage({
 
   let query = supabase
     .from("artifacts")
-    .select("id, slug, title, status, updated_at, deleted_at")
+    .select("id, slug, title, status, updated_at, deleted_at, last_worker")
     .order("updated_at", { ascending: false })
     .limit(300);
   if (status && STATUS_META[status]) query = query.eq("status", status);
@@ -48,13 +49,13 @@ export default async function LibraryPage({
       <PageHeader
         title="Library"
         actions={
-          <form className="flex items-center gap-2" action="/admin/library" method="get">
+          <form className="flex w-full items-center gap-2 sm:w-auto" action="/admin/library" method="get">
             {status && <input type="hidden" name="status" value={status} />}
             <input
               name="q"
               defaultValue={q}
               placeholder="Search titles…"
-              className="h-9 w-56 max-w-[60vw] rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring sm:w-56"
             />
           </form>
         }
@@ -79,7 +80,12 @@ export default async function LibraryPage({
                   <StatusBadge status={a.status} />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{a.title}</span>
                   {a.deleted_at && <span className="text-xs text-destructive">trashed</span>}
-                  <span className="hidden text-xs text-muted-foreground sm:inline">
+                  {a.last_worker && (
+                    <span className="hidden md:inline-flex">
+                      <ActorBadge actor={a.last_worker} />
+                    </span>
+                  )}
+                  <span className="hidden whitespace-nowrap text-xs tabular-nums text-muted-foreground sm:inline">
                     {new Date(a.updated_at).toLocaleDateString()}
                   </span>
                 </Link>
