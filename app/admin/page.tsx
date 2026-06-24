@@ -4,15 +4,19 @@ import { createClient } from "@/lib/supabase/server";
 import { getAdminContext } from "@/lib/admin/guard";
 import { StatusBadge } from "@/components/admin/StatusBadge";
 import { WorkersPanel } from "@/components/admin/WorkersPanel";
+import { HealthBanner } from "@/components/admin/HealthBanner";
 import { ActivityRow } from "@/components/admin/activity/ActivityRow";
 import { RunGroup } from "@/components/admin/activity/RunGroup";
 import { groupActivityIntoRuns, type ActivityEvent, type RunRow } from "@/lib/admin/activity";
+import { computeHealth, isOverdue, waitDays } from "@/lib/admin/health";
 import { resolveActorProfiles } from "@/lib/admin/profiles";
 import { SEVERITY_CLS, STATUS_META, STATUS_ORDER, TONES, type Status } from "@/lib/admin/labels";
 import { EmptyState, PageHeader, SectionHeading, StatCard } from "@/components/common/layout";
-import { cn, focusRing } from "@/lib/utils";
+import { cn, focusRing, timeAgo } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
+
+const HEALTH_WINDOW_DAYS = 14;
 
 type FlagRow = {
   id: string;
@@ -26,8 +30,10 @@ export default async function QueuePage() {
   const supabase = createClient();
   const ctx = await getAdminContext();
   const currentUserId = ctx.ok ? ctx.user.id : undefined;
+  const now = Date.now();
+  const healthCutoff = new Date(now - HEALTH_WINDOW_DAYS * 86_400_000).toISOString();
 
-  const [{ data: all }, { data: queue }, { data: flagsRaw }, { data: activity }, { data: runs }] =
+  const [{ data: all }, { data: queue }, { data: flagsRaw }, { data: activity }, { data: runs }, { data: winRows }] =
     await Promise.all([
       supabase.from("artifacts").select("status, deleted_at"),
       supabase
@@ -54,6 +60,11 @@ export default async function QueuePage() {
         .select("id, worker, status, session_url, started_at")
         .order("started_at", { ascending: false })
         .limit(20),
+      supabase
+        .from("audit_log")
+        .select("action")
+        .gte("created_at", healthCutoff)
+        .in("action", ["create_draft", "dedup_suppressed", "validation_rejected"]),
     ]);
 
   const counts = new Map<Status, number>();
@@ -63,6 +74,23 @@ export default async function QueuePage() {
   }
   const flags = ((flagsRaw ?? []) as unknown as FlagRow[]).filter((f) => f.artifact);
   const queueItems = queue ?? [];
+
+  // Health: latest run per worker that failed + windowed drop counts → the attention banner.
+  const latestRunStatus = new Map<string, string>();
+  for (const r of runs ?? []) if (!latestRunStatus.has(r.worker)) latestRunStatus.set(r.worker, r.status);
+  const failedWorkers = [...latestRunStatus].filter(([, s]) => s === "failed").map(([w]) => w);
+  const win = (winRows ?? []) as { action: string }[];
+  const dedupSkipped = win.filter((r) => r.action === "dedup_suppressed").length;
+  const validationRejected = win.filter((r) => r.action === "validation_rejected").length;
+  const createAttempts = win.length; // create_draft + dedup_suppressed + validation_rejected
+  const alerts = computeHealth({
+    now,
+    reviewItems: queueItems.map((q) => ({ updated_at: q.updated_at })),
+    failedWorkers,
+    createAttempts,
+    dedupSkipped,
+    validationRejected,
+  });
 
   const groups = groupActivityIntoRuns(
     (activity ?? []) as ActivityEvent[],
@@ -77,6 +105,9 @@ export default async function QueuePage() {
         title="Control HUD"
         description="Direct the autonomous editorial team — review, comment, and publish."
       />
+
+      {/* Needs-attention banner — the glance for an unattended loop */}
+      <HealthBanner alerts={alerts} />
 
       {/* Status summary */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
@@ -115,6 +146,15 @@ export default async function QueuePage() {
                   >
                     <StatusBadge status={a.status} />
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">{a.title}</span>
+                    <span
+                      title={`Waiting since ${new Date(a.updated_at).toLocaleString()}`}
+                      className={cn(
+                        "shrink-0 whitespace-nowrap text-xs tabular-nums",
+                        isOverdue(a.updated_at, now) ? "font-medium text-amber-600 dark:text-amber-400" : "text-muted-foreground",
+                      )}
+                    >
+                      {timeAgo(a.updated_at, now)}
+                    </span>
                   </Link>
                 </li>
               ))}
