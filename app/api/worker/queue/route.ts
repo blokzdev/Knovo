@@ -1,6 +1,7 @@
 import { authenticateWorker } from "@/lib/worker-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { err, json } from "@/lib/worker-api";
+import { isActionableDirective } from "@/lib/admin/queue";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ export async function GET(req: Request) {
   // Only actionable directives (an action OR publish-after) enter the worker queue; plain notes
   // are a human record and are skipped, as are comments on soft-deleted artifacts.
   const items = ((data ?? []) as unknown as Row[])
-    .filter((r) => r.artifact && r.artifact.deleted_at === null && (r.action !== null || r.publish_after))
+    .filter((r) => r.artifact && r.artifact.deleted_at === null && isActionableDirective(r))
     .map((r) => ({
       comment_id: r.id,
       action: r.action,

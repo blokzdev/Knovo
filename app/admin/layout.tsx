@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 };
 
 const ADMIN_NAV: NavLink[] = [
-  { href: "/admin", label: "Queue", exact: true },
+  { href: "/admin", label: "Overview", exact: true },
+  { href: "/admin/queue", label: "Queue" },
   { href: "/admin/library", label: "Library" },
   { href: "/admin/insights", label: "Insights" },
   { href: "/admin/moderation", label: "Discussion" },

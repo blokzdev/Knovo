@@ -15,6 +15,7 @@ type Result = { ok: true } | { ok: false; error: string };
 
 function revalidateArtifact(id: string) {
   revalidatePath("/admin");
+  revalidatePath("/admin/queue");
   revalidatePath("/admin/library");
   revalidatePath(`/admin/a/${id}`);
 }
@@ -313,6 +314,7 @@ export async function dispatchWorker(input: {
       runId,
     );
     revalidatePath("/admin");
+    revalidatePath("/admin/queue");
     if (input.artifactId) revalidateArtifact(input.artifactId);
     return { ok: true, sessionUrl: res.claude_code_session_url };
   } catch (e) {
