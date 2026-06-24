@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 
+# Dev-only local admin session cookies (scripts/dev-admin.ts; local Supabase only)
+.dev-admin-cookies.json
+
 # Node / Next.js
 node_modules/
 .next/
