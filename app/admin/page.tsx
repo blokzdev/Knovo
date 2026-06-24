@@ -150,7 +150,7 @@ export default async function QueuePage() {
                       title={`Waiting since ${new Date(a.updated_at).toLocaleString()}`}
                       className={cn(
                         "shrink-0 whitespace-nowrap text-xs tabular-nums",
-                        isOverdue(a.updated_at, now) ? "font-medium text-amber-600 dark:text-amber-400" : "text-muted-foreground",
+                        isOverdue(a.updated_at, now) ? "font-medium text-amber-700 dark:text-amber-400" : "text-muted-foreground",
                       )}
                     >
                       {timeAgo(a.updated_at, now)}

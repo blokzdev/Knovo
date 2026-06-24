@@ -17,7 +17,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export function DirectiveComposer({ artifactId }: { artifactId: string }) {
+export function DirectiveComposer({
+  artifactId,
+  onSubmitted,
+}: {
+  artifactId: string;
+  onSubmitted?: () => void;
+}) {
   const [note, setNote] = useState("");
   const [action, setAction] = useState<DirectiveAction | "none">("none");
   const [publishAfter, setPublishAfter] = useState(false);
@@ -36,6 +42,7 @@ export function DirectiveComposer({ artifactId }: { artifactId: string }) {
         setNote("");
         setAction("none");
         setPublishAfter(false);
+        onSubmitted?.();
       } else {
         toast.error("Couldn't add directive", { description: r.error });
       }
@@ -44,6 +51,7 @@ export function DirectiveComposer({ artifactId }: { artifactId: string }) {
   return (
     <div className="space-y-3 rounded-lg border border-border bg-card p-3">
       <Textarea
+        aria-label="Directive instruction"
         placeholder="Natural-language instruction — e.g. “Tighten the abstract and verify the IC50 against ChEMBL.”"
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -51,9 +59,9 @@ export function DirectiveComposer({ artifactId }: { artifactId: string }) {
       />
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
-          <Label className="text-xs text-muted-foreground">Action</Label>
+          <Label htmlFor="directive-action" className="text-xs text-muted-foreground">Action</Label>
           <Select value={action} onValueChange={(v) => setAction(v as DirectiveAction | "none")}>
-            <SelectTrigger className="h-8 w-full min-w-0 text-xs sm:w-[200px]">
+            <SelectTrigger id="directive-action" aria-label="Action" className="h-8 w-full min-w-0 text-xs sm:w-[200px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
