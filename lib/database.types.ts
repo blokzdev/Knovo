@@ -1,10 +1,3 @@
-// Generated from the Supabase schema (supabase/migrations). Regenerate after schema changes:
-//   npx supabase gen types typescript --project-id <ref> > lib/database.types.ts
-// (or via the Supabase MCP generate_typescript_types tool). Keep in sync with the migrations.
-// NOTE: the 0004 editorial-workflow tables/columns and the 0008 routine_configs / app_settings
-// tables below were authored by hand alongside the migration; regenerate from the live DB once the
-// migrations are applied.
-
 export type Json =
   | string
   | number
@@ -14,8 +7,30 @@ export type Json =
   | Json[]
 
 export type Database = {
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -162,6 +177,7 @@ export type Database = {
           created_at: string
           detail: Json | null
           id: string
+          run_id: string | null
         }
         Insert: {
           action: string
@@ -170,6 +186,7 @@ export type Database = {
           created_at?: string
           detail?: Json | null
           id?: string
+          run_id?: string | null
         }
         Update: {
           action?: string
@@ -178,6 +195,7 @@ export type Database = {
           created_at?: string
           detail?: Json | null
           id?: string
+          run_id?: string | null
         }
         Relationships: [
           {
@@ -185,6 +203,46 @@ export type Database = {
             columns: ["artifact_id"]
             isOneToOne: false
             referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_log_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "routine_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bookmarks: {
+        Row: {
+          artifact_id: string
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          artifact_id: string
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          artifact_id?: string
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookmarks_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookmarks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -266,6 +324,60 @@ export type Database = {
         }
         Relationships: []
       }
+      reader_comments: {
+        Row: {
+          artifact_id: string
+          author_avatar: string | null
+          author_id: string
+          author_name: string | null
+          body: string
+          created_at: string
+          edited: boolean
+          id: string
+          status: Database["public"]["Enums"]["reader_comment_status"]
+          updated_at: string
+        }
+        Insert: {
+          artifact_id: string
+          author_avatar?: string | null
+          author_id: string
+          author_name?: string | null
+          body: string
+          created_at?: string
+          edited?: boolean
+          id?: string
+          status?: Database["public"]["Enums"]["reader_comment_status"]
+          updated_at?: string
+        }
+        Update: {
+          artifact_id?: string
+          author_avatar?: string | null
+          author_id?: string
+          author_name?: string | null
+          body?: string
+          created_at?: string
+          edited?: boolean
+          id?: string
+          status?: Database["public"]["Enums"]["reader_comment_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reader_comments_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reader_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revisions: {
         Row: {
           artifact_id: string
@@ -334,6 +446,66 @@ export type Database = {
         }
         Relationships: []
       }
+      routine_runs: {
+        Row: {
+          artifact_id: string | null
+          created_at: string
+          dispatched_by: string | null
+          ended_at: string | null
+          error: string | null
+          id: string
+          session_id: string | null
+          session_url: string | null
+          started_at: string
+          status: string
+          text_context: string | null
+          worker: string
+        }
+        Insert: {
+          artifact_id?: string | null
+          created_at?: string
+          dispatched_by?: string | null
+          ended_at?: string | null
+          error?: string | null
+          id?: string
+          session_id?: string | null
+          session_url?: string | null
+          started_at?: string
+          status?: string
+          text_context?: string | null
+          worker: string
+        }
+        Update: {
+          artifact_id?: string | null
+          created_at?: string
+          dispatched_by?: string | null
+          ended_at?: string | null
+          error?: string | null
+          id?: string
+          session_id?: string | null
+          session_url?: string | null
+          started_at?: string
+          status?: string
+          text_context?: string | null
+          worker?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_runs_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routine_runs_dispatched_by_fkey"
+            columns: ["dispatched_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       series: {
         Row: {
           created_at: string
@@ -388,93 +560,6 @@ export type Database = {
         }
         Relationships: []
       }
-      bookmarks: {
-        Row: {
-          artifact_id: string
-          created_at: string
-          user_id: string
-        }
-        Insert: {
-          artifact_id: string
-          created_at?: string
-          user_id: string
-        }
-        Update: {
-          artifact_id?: string
-          created_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bookmarks_artifact_id_fkey"
-            columns: ["artifact_id"]
-            isOneToOne: false
-            referencedRelation: "artifacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookmarks_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      reader_comments: {
-        Row: {
-          artifact_id: string
-          author_avatar: string | null
-          author_id: string
-          author_name: string | null
-          body: string
-          created_at: string
-          edited: boolean
-          id: string
-          status: Database["public"]["Enums"]["reader_comment_status"]
-          updated_at: string
-        }
-        Insert: {
-          artifact_id: string
-          author_avatar?: string | null
-          author_id: string
-          author_name?: string | null
-          body: string
-          created_at?: string
-          edited?: boolean
-          id?: string
-          status?: Database["public"]["Enums"]["reader_comment_status"]
-          updated_at?: string
-        }
-        Update: {
-          artifact_id?: string
-          author_avatar?: string | null
-          author_id?: string
-          author_name?: string | null
-          body?: string
-          created_at?: string
-          edited?: boolean
-          id?: string
-          status?: Database["public"]["Enums"]["reader_comment_status"]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "reader_comments_artifact_id_fkey"
-            columns: ["artifact_id"]
-            isOneToOne: false
-            referencedRelation: "artifacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reader_comments_author_id_fkey"
-            columns: ["author_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       subscriptions: {
         Row: {
           created_at: string
@@ -522,7 +607,7 @@ export type Database = {
       }
     }
     Functions: {
-      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean }
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       artifact_status:
@@ -534,7 +619,6 @@ export type Database = {
         | "approved"
         | "archived"
       comment_status: "open" | "addressed" | "dismissed"
-      reader_comment_status: "visible" | "hidden" | "removed"
       directive_action:
         | "revise"
         | "expand"
@@ -544,6 +628,7 @@ export type Database = {
         | "make_series"
         | "add_to_series"
         | "archive"
+      reader_comment_status: "visible" | "hidden" | "removed"
       source_db: "pdb" | "chembl" | "pubmed" | "biorxiv"
       source_role: "primary" | "supporting"
       user_role: "admin" | "viewer"
@@ -553,3 +638,155 @@ export type Database = {
     }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
+  public: {
+    Enums: {
+      artifact_status: [
+        "draft",
+        "published",
+        "rejected",
+        "needs_review",
+        "changes_requested",
+        "approved",
+        "archived",
+      ],
+      comment_status: ["open", "addressed", "dismissed"],
+      directive_action: [
+        "revise",
+        "expand",
+        "condense",
+        "reverify",
+        "split",
+        "make_series",
+        "add_to_series",
+        "archive",
+      ],
+      reader_comment_status: ["visible", "hidden", "removed"],
+      source_db: ["pdb", "chembl", "pubmed", "biorxiv"],
+      source_role: ["primary", "supporting"],
+      user_role: ["admin", "viewer"],
+    },
+  },
+} as const
+
