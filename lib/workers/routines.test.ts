@@ -7,7 +7,11 @@ import { WORKER_ROUTINES, WORKER_ORDER } from "./routines";
 // asserts each registry `instructions` block is byte-for-byte identical to its PASTE-READY block in
 // the doc, so the in-app copy (admin settings) can never silently drift from the canonical text.
 function pasteReadyBlocks(): string[] {
-  const md = readFileSync(resolve(process.cwd(), "docs/routines.md"), "utf8");
+  // Normalize CRLF→LF before matching: on a Windows checkout (core.autocrlf) the working-tree
+  // copy of docs/routines.md is CRLF, but this LF-anchored regex would then match zero blocks.
+  // .gitattributes pins these files to LF at the repo level; this keeps the guard correct even if
+  // a working tree slips back to CRLF.
+  const md = readFileSync(resolve(process.cwd(), "docs/routines.md"), "utf8").replace(/\r\n/g, "\n");
   const re = /### ▶ PASTE-READY[^\n]*\n```\n([\s\S]*?)\n```/g;
   const blocks: string[] = [];
   let m: RegExpExecArray | null;
@@ -26,7 +30,7 @@ describe("worker routines registry ⇄ docs/routines.md", () => {
   it.each(WORKER_ORDER.map((id, i) => [id, i] as const))(
     "%s instructions match the doc's PASTE-READY block",
     (id, i) => {
-      expect(WORKER_ROUTINES[id].instructions.trim()).toBe(blocks[i]);
+      expect(WORKER_ROUTINES[id].instructions.replace(/\r\n/g, "\n").trim()).toBe(blocks[i]);
     },
   );
 

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { KnovoWordmark } from "@/components/Logo";
 import { NavLinks, type NavLink } from "@/components/common/NavLinks";
 import { ThemeToggle } from "@/components/common/ThemeToggle";
@@ -11,9 +10,7 @@ export function SiteHeader({ account }: { account?: React.ReactNode }) {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:gap-6 sm:px-6">
-        <Link href="/" aria-label="Knovo home">
-          <KnovoWordmark />
-        </Link>
+        <KnovoWordmark />
         <NavLinks links={SITE_NAV} />
         <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <ThemeToggle />

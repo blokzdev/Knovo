@@ -1,0 +1,21 @@
+# Normalize all text files to LF in the repository AND the working tree, on every platform.
+# Without this, Git's autocrlf checks out CRLF on Windows, which breaks tests that read a
+# tracked file and compare it byte-for-byte (e.g. the routines drift guard). LF everywhere
+# keeps local checks (run on Windows) consistent with CI (Linux).
+* text=auto eol=lf
+
+# Known binary types — never normalize or diff as text.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.avif  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.eot   binary
+*.pdf   binary
+*.zip   binary
