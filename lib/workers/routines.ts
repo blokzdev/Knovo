@@ -53,7 +53,7 @@ KNOVO_WORKER_TOKEN_SCOUT (Authorization: Bearer $KNOVO_WORKER_TOKEN_SCOUT).
    citation_text. Mark exactly the main source role:"primary"; others "supporting". No
    source -> do not draft.
 
-3. DEDUP. POST {KNOVO_API_BASE}/worker/dedup with {"sources":[{"db","uid"}, ...]}. If the
+3. DEDUP. POST {KNOVO_API_BASE}/api/worker/dedup with {"sources":[{"db","uid"}, ...]}. If the
    PRIMARY source comes back seen:true or rejected:true, STOP — do not draft.
 
 4. COMPOSE the artifact by filling the slot schema ONLY (current schemaVersion). Slots:
@@ -74,7 +74,7 @@ KNOVO_WORKER_TOKEN_SCOUT (Authorization: Bearer $KNOVO_WORKER_TOKEN_SCOUT).
    kinds, fields, control params, or selection syntax. Provenance footer is auto-rendered — do
    not author it.
 
-5. CREATE. POST {KNOVO_API_BASE}/worker/artifacts with:
+5. CREATE. POST {KNOVO_API_BASE}/api/worker/artifacts with:
      {"doc": <the slot document incl. schemaVersion, title, summary, stage, ...>,
       "sources": [{"db","uid","url","title","citation_text","role"}]}
    The API zod-validates the doc (422 if invalid — fix and retry, or STOP), blocks duplicate/
@@ -101,7 +101,7 @@ Call the API with curl using KNOVO_API_BASE and KNOVO_WORKER_TOKEN_EDITOR
 (Authorization: Bearer $KNOVO_WORKER_TOKEN_EDITOR). If the trigger included a "text" payload,
 treat it as the admin's immediate instruction in addition to the queue.
 
-1. PULL the queue: GET {KNOVO_API_BASE}/worker/queue. Each item is an actionable directive:
+1. PULL the queue: GET {KNOVO_API_BASE}/api/worker/queue. Each item is an actionable directive:
    { comment_id, action, publish_after, note, options, artifact:{id,slug,title,status} }.
    A directive has two axes: \`action\` (what to do; may be null) and \`publish_after\` (whether to
    publish when done). \`note\` is the admin's natural-language instruction; obey it.
@@ -110,18 +110,18 @@ treat it as the admin's immediate instruction in addition to the queue.
    a) DO THE ACTION:
       - "revise" | "expand" | "condense": improve the doc accordingly (revise = change per note,
         expand = deepen/add panels, condense = tighten). Re-ground from primary sources for any
-        scientific change. PATCH {KNOVO_API_BASE}/worker/artifacts/{id}
+        scientific change. PATCH {KNOVO_API_BASE}/api/worker/artifacts/{id}
         {"doc":<updated>, "note":"<what you changed>"}. Works for drafts AND live articles.
       - "reverify": re-check each cited primary source against bioRxiv/PubMed/ChEMBL/PDB for
         retraction or update; correct claims/citations and PATCH the doc. If a source is
         retracted/invalid and you cannot fix it, POST .../flag {"note":"...","severity":"critical"}
         instead of guessing.
-      - "split": create the focused child drafts via POST {KNOVO_API_BASE}/worker/artifacts (one
-        per sub-topic, each grounded), then optionally group them with /worker/series, and
+      - "split": create the focused child drafts via POST {KNOVO_API_BASE}/api/worker/artifacts (one
+        per sub-topic, each grounded), then optionally group them with /api/worker/series, and
         archive or revise the original per the note.
-      - "make_series": POST {KNOVO_API_BASE}/worker/series {"title","summary","artifactIds":[...]}.
-      - "add_to_series": POST {KNOVO_API_BASE}/worker/series {"seriesId":"...","artifactIds":[...]}.
-      - "archive": POST {KNOVO_API_BASE}/worker/artifacts/{id}/status {"to":"archived"}.
+      - "make_series": POST {KNOVO_API_BASE}/api/worker/series {"title","summary","artifactIds":[...]}.
+      - "add_to_series": POST {KNOVO_API_BASE}/api/worker/series {"seriesId":"...","artifactIds":[...]}.
+      - "archive": POST {KNOVO_API_BASE}/api/worker/artifacts/{id}/status {"to":"archived"}.
       - null action (a "publish as-is" with no change): do nothing in this step.
    b) THEN SET STATUS (for content actions on a single artifact):
       - if publish_after is true: POST .../status {"to":"published"} (the API allows it because the
@@ -133,7 +133,7 @@ treat it as the admin's immediate instruction in addition to the queue.
    (422 on failure) and snapshots a revision automatically. If you're unsure or blocked, POST
    .../flag instead of acting wrongly.
 
-3. RESOLVE each handled item: POST {KNOVO_API_BASE}/worker/comments/{comment_id}/resolve
+3. RESOLVE each handled item: POST {KNOVO_API_BASE}/api/worker/comments/{comment_id}/resolve
    {"disposition":"addressed"} (or "dismissed", with a note, if no action was appropriate).
 
 Only publish when publish_after is set (or the admin already marked the artifact approved) — the
@@ -155,7 +155,7 @@ primary sources and flagging problems to the admin. You never restructure the li
 do not publish. Use KNOVO_API_BASE and KNOVO_WORKER_TOKEN_KEEPER
 (Authorization: Bearer $KNOVO_WORKER_TOKEN_KEEPER). Never write to the database directly.
 
-1. GET {KNOVO_API_BASE}/worker/review-targets?limit=10 — live published artifacts (oldest-checked
+1. GET {KNOVO_API_BASE}/api/worker/review-targets?limit=10 — live published artifacts (oldest-checked
    first) with their sources [{db,uid,url,role,citation_text}].
 
 2. For each artifact, RE-VERIFY every PRIMARY source against its database (bioRxiv/PubMed/ChEMBL,
@@ -165,7 +165,7 @@ do not publish. Use KNOVO_API_BASE and KNOVO_WORKER_TOKEN_KEEPER
      entry) in a way that affects the artifact's claims.
 
 3. ACT:
-   - If something is wrong or materially changed: POST {KNOVO_API_BASE}/worker/artifacts/{id}/flag
+   - If something is wrong or materially changed: POST {KNOVO_API_BASE}/api/worker/artifacts/{id}/flag
      {"note":"<what changed and where, with the source id/url>", "severity":"info|warn|critical"}.
      Use "critical" for a retraction/withdrawal. Flagging puts it in the admin's dashboard; the
      admin will direct a reverify/revise. Do NOT edit a published artifact yourself unless the
