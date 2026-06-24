@@ -115,15 +115,15 @@ export default async function ArtifactDetailPage({ params }: { params: { id: str
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Preview */}
-        <div className="lg:col-span-2">
+        {/* Preview — min-w-0 so a wide stage can't blow out the grid track (and force page overflow). */}
+        <div className="min-w-0 lg:col-span-2">
           <div className="rounded-xl border border-border bg-card p-5">
             <ArtifactRenderer doc={artifact.doc} schemaVersion={artifact.schema_version} sources={sources} />
           </div>
         </div>
 
-        {/* Direct + history */}
-        <div className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+        {/* Direct + history — min-w-0 so long audit notes/reasons wrap instead of widening the column. */}
+        <div className="min-w-0 space-y-4 lg:sticky lg:top-20 lg:self-start">
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-foreground">Direct</h2>
             <DirectiveComposer artifactId={artifact.id} />
