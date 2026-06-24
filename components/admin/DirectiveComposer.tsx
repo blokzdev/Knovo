@@ -50,10 +50,10 @@ export function DirectiveComposer({ artifactId }: { artifactId: string }) {
         rows={3}
       />
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:flex-none">
           <Label className="text-xs text-muted-foreground">Action</Label>
           <Select value={action} onValueChange={(v) => setAction(v as DirectiveAction | "none")}>
-            <SelectTrigger className="h-8 w-[220px] text-xs">
+            <SelectTrigger className="h-8 w-full min-w-0 text-xs sm:w-[200px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
