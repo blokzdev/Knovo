@@ -83,12 +83,14 @@ export async function audit(
   action: string,
   artifactId: string | null,
   detail?: Record<string, unknown>,
+  runId?: string | null,
 ) {
   await db.from("audit_log").insert({
     actor,
     action,
     artifact_id: artifactId,
     detail: (detail ?? null) as Database["public"]["Tables"]["audit_log"]["Insert"]["detail"],
+    run_id: runId ?? null,
   });
 }
 

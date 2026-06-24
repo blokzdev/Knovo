@@ -4,9 +4,11 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 import { resolveComment } from "@/lib/admin/actions";
-import { ACTION_LABELS, SEVERITY_CLS, type DirectiveAction } from "@/lib/admin/labels";
+import { type DirectiveAction } from "@/lib/admin/labels";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DirectiveBadges } from "@/components/admin/DirectiveBadges";
+import { ActorBadge, type ProfileMap } from "@/components/admin/activity/ActorBadge";
 
 export type DirectiveRow = {
   id: string;
@@ -22,9 +24,13 @@ export type DirectiveRow = {
 export function DirectiveList({
   artifactId,
   directives,
+  profiles,
+  currentUserId,
 }: {
   artifactId: string;
   directives: DirectiveRow[];
+  profiles?: ProfileMap;
+  currentUserId?: string;
 }) {
   if (directives.length === 0) {
     return <p className="px-1 py-6 text-center text-sm text-muted-foreground">No directives yet.</p>;
@@ -32,13 +38,23 @@ export function DirectiveList({
   return (
     <ul className="space-y-2">
       {directives.map((d) => (
-        <Item key={d.id} artifactId={artifactId} d={d} />
+        <Item key={d.id} artifactId={artifactId} d={d} profiles={profiles} currentUserId={currentUserId} />
       ))}
     </ul>
   );
 }
 
-function Item({ artifactId, d }: { artifactId: string; d: DirectiveRow }) {
+function Item({
+  artifactId,
+  d,
+  profiles,
+  currentUserId,
+}: {
+  artifactId: string;
+  d: DirectiveRow;
+  profiles?: ProfileMap;
+  currentUserId?: string;
+}) {
   const [pending, start] = useTransition();
   const resolve = (disposition: "addressed" | "dismissed") =>
     start(async () => {
@@ -46,44 +62,25 @@ function Item({ artifactId, d }: { artifactId: string; d: DirectiveRow }) {
       if (!r.ok) toast.error("Couldn't update", { description: r.error });
     });
 
-  const isFlag = !d.action && !d.publish_after && d.options?.raised_by;
-  const severity = d.options?.severity;
+  const isFlag = Boolean(!d.action && !d.publish_after && d.options?.raised_by);
   const open = d.status === "open";
 
   return (
-    <li
-      className={cn(
-        "rounded-lg border p-3 text-sm",
-        open ? "border-border bg-card" : "border-border bg-muted opacity-70",
-      )}
-    >
+    <li className={cn("rounded-lg border p-3 text-sm", open ? "border-border bg-card" : "border-border bg-muted opacity-70")}>
       <div className="flex flex-wrap items-center gap-2">
-        {d.action && (
-          <span className="rounded-md border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-xs font-medium text-indigo-700">
-            {ACTION_LABELS[d.action]}
-          </span>
-        )}
-        {d.publish_after && (
-          <span className="rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-xs font-medium text-emerald-700">
-            publish after
-          </span>
-        )}
-        {isFlag && (
-          <span
-            className={cn(
-              "rounded-md border px-1.5 py-0.5 text-xs font-medium",
-              SEVERITY_CLS[severity ?? "info"] ?? SEVERITY_CLS.info,
-            )}
-          >
-            flag · {severity ?? "info"}
-          </span>
-        )}
-        {d.options?.raised_by && (
-          <span className="text-xs text-muted-foreground">{d.options.raised_by}</span>
-        )}
+        <DirectiveBadges
+          action={d.action}
+          publishAfter={d.publish_after}
+          severity={d.options?.severity}
+          isFlag={isFlag}
+        />
+        {d.options?.raised_by && <ActorBadge actor={d.options.raised_by} profiles={profiles} currentUserId={currentUserId} />}
         {!open && (
-          <span className="text-xs text-muted-foreground">
-            {d.status} {d.addressed_by ? `· ${d.addressed_by}` : ""}
+          <span className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground">
+            {d.status}
+            {d.addressed_by && (
+              <ActorBadge actor={d.addressed_by} profiles={profiles} currentUserId={currentUserId} showIcon={false} />
+            )}
           </span>
         )}
       </div>

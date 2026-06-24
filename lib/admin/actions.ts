@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "./guard";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { audit } from "@/lib/worker-api";
+import { audit, snapshotRevision } from "@/lib/worker-api";
+import { safeParseArtifactDoc } from "@/lib/artifact-schema";
 import { fireWorker, type WorkerId } from "@/lib/routines";
 import { isAllowedFireUrl, FIRE_URL_REQUIREMENT } from "@/lib/routine-url";
 import type { Database } from "@/lib/database.types";
@@ -88,6 +89,55 @@ export async function setStatus(input: { artifactId: string; to: Status; reason?
     const { error } = await db.from("artifacts").update(patch).eq("id", input.artifactId);
     if (error) return { ok: false, error: error.message };
     await audit(db, `admin:${user.id}`, `status:${input.to}`, input.artifactId, { reason: input.reason ?? null });
+    revalidateArtifact(input.artifactId);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Failed." };
+  }
+}
+
+// Restore a prior revision as the artifact's current doc. Governed like any admin write: re-validates
+// the revision doc against the schema (invariant #3), snapshots the CURRENT doc first (so a restore is
+// itself recoverable), updates in place, and audits. Does NOT change public status — re-exposing edits
+// to a published artifact still goes through the normal publish gate.
+export async function restoreRevision(input: { artifactId: string; revisionId: string }): Promise<Result> {
+  try {
+    const { user } = await requireAdmin();
+    const db = createAdminClient();
+    const { data: rev } = await db
+      .from("revisions")
+      .select("id, artifact_id, schema_version, doc, title, summary")
+      .eq("id", input.revisionId)
+      .maybeSingle();
+    if (!rev || rev.artifact_id !== input.artifactId) return { ok: false, error: "Revision not found." };
+
+    const { data: cur } = await db
+      .from("artifacts")
+      .select("id, schema_version, doc, title, summary")
+      .eq("id", input.artifactId)
+      .maybeSingle();
+    if (!cur) return { ok: false, error: "Artifact not found." };
+
+    const parsed = safeParseArtifactDoc(rev.schema_version, rev.doc);
+    if (!parsed.success) return { ok: false, error: "That revision's document no longer passes validation." };
+
+    await snapshotRevision(db, cur, `admin:${user.id}`, "pre-restore snapshot");
+    const { error } = await db
+      .from("artifacts")
+      .update({
+        doc: parsed.data as never,
+        title: parsed.data.title,
+        summary: parsed.data.summary,
+        schema_version: rev.schema_version,
+      })
+      .eq("id", input.artifactId);
+    if (error) return { ok: false, error: error.message };
+
+    await audit(db, `admin:${user.id}`, "restore_revision", input.artifactId, {
+      revision_id: input.revisionId,
+      from_schema: cur.schema_version,
+      to_schema: rev.schema_version,
+    });
     revalidateArtifact(input.artifactId);
     return { ok: true };
   } catch (e) {
@@ -200,7 +250,9 @@ export async function saveAppSetting(input: { key: "knovo_api_base"; value: stri
   }
 }
 
-// Fire a worker routine on demand (dashboard "run now"). Returns the session URL to watch.
+// Fire a worker routine on demand (dashboard "run now"). Opens a routine_runs row so the run + its
+// Claude session is persisted and the worker's subsequent activity can be grouped under it in the
+// HUD. Returns the session URL to watch.
 export async function dispatchWorker(input: {
   worker: WorkerId;
   text?: string;
@@ -208,11 +260,59 @@ export async function dispatchWorker(input: {
 }): Promise<{ ok: true; sessionUrl: string } | { ok: false; error: string }> {
   try {
     const { user } = await requireAdmin();
-    const res = await fireWorker(input.worker, input.text);
     const db = createAdminClient();
-    await audit(db, `admin:${user.id}`, `dispatch:${input.worker}`, input.artifactId ?? null, {
-      session: res.claude_code_session_id,
-    });
+
+    // Open a run (best-effort: tolerate a missing routine_runs table on a pre-0010 DB).
+    let runId: string | null = null;
+    try {
+      const { data: run } = await db
+        .from("routine_runs")
+        .insert({
+          worker: input.worker,
+          status: "dispatched",
+          dispatched_by: user.id,
+          artifact_id: input.artifactId ?? null,
+          text_context: input.text?.slice(0, 2000) ?? null,
+        })
+        .select("id")
+        .single();
+      runId = run?.id ?? null;
+    } catch {
+      // pre-migration / insert error — proceed without run tracking.
+    }
+
+    let res;
+    try {
+      res = await fireWorker(input.worker, input.text);
+    } catch (e) {
+      if (runId) {
+        await db
+          .from("routine_runs")
+          .update({ status: "failed", error: e instanceof Error ? e.message : "dispatch failed", ended_at: new Date().toISOString() })
+          .eq("id", runId);
+      }
+      throw e;
+    }
+
+    if (runId) {
+      try {
+        await db
+          .from("routine_runs")
+          .update({ session_id: res.claude_code_session_id, session_url: res.claude_code_session_url })
+          .eq("id", runId);
+      } catch {
+        // best-effort: the worker fired successfully; only persisting the session link failed.
+      }
+    }
+    await audit(
+      db,
+      `admin:${user.id}`,
+      `dispatch:${input.worker}`,
+      input.artifactId ?? null,
+      { session: res.claude_code_session_id },
+      runId,
+    );
+    revalidatePath("/admin");
     if (input.artifactId) revalidateArtifact(input.artifactId);
     return { ok: true, sessionUrl: res.claude_code_session_url };
   } catch (e) {

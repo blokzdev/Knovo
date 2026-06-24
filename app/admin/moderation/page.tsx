@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Eye, EyeOff, Trash2, type LucideIcon } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ModerateComment } from "@/components/admin/ModerateComment";
 import { PageHeader } from "@/components/common/layout";
@@ -21,6 +22,11 @@ const STATUS_STYLE: Record<Row["status"], string> = {
   visible: "bg-success/10 text-success",
   hidden: "bg-warning/10 text-warning",
   removed: "bg-destructive/10 text-destructive",
+};
+const STATUS_ICON: Record<Row["status"], LucideIcon> = {
+  visible: Eye,
+  hidden: EyeOff,
+  removed: Trash2,
 };
 
 export default async function ModerationPage() {
@@ -51,7 +57,16 @@ export default async function ModerationPage() {
             {comments.map((c) => (
               <li key={c.id} className="space-y-2 p-4">
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <span className={cn("rounded-full px-2 py-0.5 font-medium", STATUS_STYLE[c.status])}>
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium",
+                      STATUS_STYLE[c.status],
+                    )}
+                  >
+                    {(() => {
+                      const Icon = STATUS_ICON[c.status];
+                      return <Icon className="h-3 w-3" aria-hidden />;
+                    })()}
                     {c.status}
                   </span>
                   <span className="font-medium text-foreground">

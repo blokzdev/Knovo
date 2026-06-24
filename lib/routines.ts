@@ -7,8 +7,9 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAllowedFireUrl } from "@/lib/routine-url";
+import type { WorkerId } from "@/lib/admin/labels";
 
-export type WorkerId = "scout" | "editor" | "keeper";
+export type { WorkerId };
 
 const CONFIG: Record<WorkerId, { urlEnv: string; tokenEnv: string }> = {
   scout: { urlEnv: "ROUTINE_SCOUT_FIRE_URL", tokenEnv: "ROUTINE_SCOUT_TOKEN" },
