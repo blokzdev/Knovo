@@ -10,16 +10,22 @@ export function ActivityDetail({ action, detail }: { action: string; detail: unk
 
   if (d.from && action.startsWith("status:")) {
     const to = action.slice("status:".length) as Status;
-    parts.push(
-      <span key="transition" className="inline-flex items-center gap-1 whitespace-nowrap">
-        {STATUS_META[d.from as Status]?.label ?? d.from}
-        <ArrowRight className="h-3 w-3 shrink-0" aria-hidden />
-        {STATUS_META[to]?.label ?? to}
-      </span>,
-    );
+    // Only show the arrow for a real transition — a republish/edit-in-place audits status:published
+    // while already published (from === to), which rendered a confusing "Published → Published".
+    if (d.from !== to) {
+      parts.push(
+        <span key="transition" className="inline-flex items-center gap-1 whitespace-nowrap">
+          {STATUS_META[d.from as Status]?.label ?? d.from}
+          <ArrowRight className="h-3 w-3 shrink-0" aria-hidden />
+          {STATUS_META[to]?.label ?? to}
+        </span>,
+      );
+    }
   }
-  if (d.reason) parts.push(<span key="reason" className="italic">&ldquo;{d.reason}&rdquo;</span>);
-  if (d.note) parts.push(<span key="note" className="min-w-0 truncate">{d.note}</span>);
+  // Free text (reason/note) wraps with break-words — never `truncate` (white-space:nowrap), whose
+  // min-content width can blow out the grid column and force horizontal page overflow on mobile.
+  if (d.reason) parts.push(<span key="reason" className="min-w-0 break-words italic">&ldquo;{d.reason}&rdquo;</span>);
+  if (d.note) parts.push(<span key="note" className="min-w-0 break-words">{d.note}</span>);
   if (d.changed?.length) {
     parts.push(
       <span key="changed" className="inline-flex flex-wrap items-center gap-1">
