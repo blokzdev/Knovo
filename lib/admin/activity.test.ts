@@ -31,6 +31,8 @@ describe("parseActor", () => {
 describe("describeAction", () => {
   it.each([
     ["create_draft", "Drafted", "draft"],
+    ["dedup_suppressed", "Skipped a duplicate", "dismissed"],
+    ["validation_rejected", "Draft failed validation", "reject"],
     ["update", "Edited content", "edit"],
     ["status:needs_review", "Sent for review", "review"],
     ["status:changes_requested", "Requested changes", "changes"],
@@ -86,6 +88,12 @@ describe("parseAuditDetail", () => {
   });
   it("preserves explicit null reason/note", () => {
     expect(parseAuditDetail({ reason: null, note: null })).toMatchObject({ reason: null, note: null });
+  });
+  it("extracts the dedup/validation drop source", () => {
+    expect(parseAuditDetail({ source: "pdb:7XYZ", reason: "duplicate" })).toMatchObject({
+      source: "pdb:7XYZ",
+      reason: "duplicate",
+    });
   });
 });
 
