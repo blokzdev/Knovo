@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, Save } from "lucide-react";
 import { saveAppSetting, saveRoutineConfig } from "@/lib/admin/actions";
 import { isAllowedFireUrl, FIRE_URL_REQUIREMENT } from "@/lib/routine-url";
-import { WORKER_META } from "@/lib/admin/labels";
+import { WORKER_META, type WorkerId } from "@/lib/admin/labels";
 import type { ConfigSource, RoutineSetting, RoutineSettings } from "@/lib/admin/settings";
 import { FormField } from "@/components/common/FormField";
 import { Button } from "@/components/ui/button";
@@ -40,12 +40,31 @@ const SOURCE_DOT: Record<ConfigSource, string> = {
 };
 
 // One tab per worker. Each tab is a complete control panel: how to set up the routine (guidance +
-// copyable system prompt) and how to wire its dashboard trigger (fire URL + token).
-export function RoutineConfigForm({ settings }: { settings: RoutineSettings }) {
+// copyable system prompt) and how to wire its dashboard trigger (fire URL + token). `initialWorker`
+// (from /admin/settings?worker=<id>, set by the dashboard card CTAs) opens that tab + scrolls to it.
+export function RoutineConfigForm({
+  settings,
+  initialWorker,
+}: {
+  settings: RoutineSettings;
+  initialWorker?: WorkerId;
+}) {
+  const tabsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!initialWorker) return;
+    const el = tabsRef.current;
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Move keyboard/AT focus to the target region too (not just the viewport), so deep-link arrivals
+    // aren't left with focus stranded at the page top. Deferred a frame so it lands AFTER the browser's
+    // post-navigation focus reset; preventScroll so it doesn't fight the smooth scroll.
+    const id = requestAnimationFrame(() => el?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(id);
+  }, [initialWorker]);
+
   return (
     <div className="space-y-6">
       <GlobalCard knovoApiBase={settings.knovoApiBase} />
-      <div className="space-y-3">
+      <div className="space-y-3 outline-none" ref={tabsRef} tabIndex={-1}>
         <div className="space-y-1">
           <h2 className="text-sm font-semibold text-foreground">Worker routines</h2>
           <p className="text-xs text-muted-foreground">
@@ -53,7 +72,7 @@ export function RoutineConfigForm({ settings }: { settings: RoutineSettings }) {
             trigger so the HUD can fire it on demand.
           </p>
         </div>
-        <Tabs defaultValue={settings.routines[0]?.worker ?? "scout"}>
+        <Tabs defaultValue={initialWorker ?? settings.routines[0]?.worker ?? "scout"}>
           <TabsList className="grid h-auto w-full grid-cols-3">
             {settings.routines.map((r) => {
               const Icon = WORKER_ICONS[r.worker];
@@ -241,7 +260,11 @@ function RoutineCard({ setting }: { setting: RoutineSetting }) {
             </Button>
           )}
         </div>
-        <DispatchButton worker={setting.worker} label="Test" disabled={setting.source === "none"} />
+        <DispatchButton
+          worker={setting.worker}
+          label="Test"
+          disabled={setting.source === "none" || !setting.fireUrlValid}
+        />
       </CardFooter>
     </Card>
   );
