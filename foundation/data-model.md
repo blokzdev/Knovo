@@ -14,6 +14,11 @@ distinct: admin-only `comments` (control signals) vs. public `reader_comments` (
 `routine_configs` and `app_settings`, for the in-HUD routine-trigger settings (BYOK). They sit
 outside the worker API + slot schema and are never touched by workers.)*
 
+*(Amended 2026-06-26 — `0011_audience_views` added privacy-first audience measurement
+(`artifact_views` + `audience_salt` + the `record_artifact_view` recorder). Like the reader and
+config tables, these sit **outside** the worker API + slot schema; the worker surface is unchanged.
+See "Audience measurement" below.)*
+
 ## Tables
 
 ### profiles
@@ -137,6 +142,25 @@ server-side and never returned to the browser (the UI masks it to `••••l
 
 Both are **admin-only** (RLS `is_admin()`, no anon grant); the trusted server reads via service_role.
 
+## Audience measurement *(0011 — privacy-first, no PII)*
+Server-side reach measurement on **published** artifacts, **outside** the worker API + slot schema.
+No cookie is set, no third party is involved, and **no PII is stored** — readers are counted by a
+cookieless, salted, one-way hash. Answers the open Phase-2 question: are practitioners finding +
+**returning** to the explainers? (See `security-and-privacy.md` → "Audience measurement".)
+- **artifact_views** `(artifact_id FK→artifacts ON DELETE CASCADE, day date, visitor_hash text,
+  hits int default 1, first_seen_at, last_seen_at, PK(artifact_id, day, visitor_hash))` — one
+  **deduped daily** row per (artifact, day, visitor); `hits` counts same-day repeats. Yields
+  views/day (sum hits), unique readers/day (row count), top artifacts, and returns (a `visitor_hash`
+  on ≥2 distinct days). RLS-enabled with **no anon/authenticated policy** — read only via the
+  service-role client (admin Insights), aggregated server-side so raw hashes never reach a browser.
+- **audience_salt** `(id bool PK=true singleton, salt text, window_id bigint, rotated_at)` — the
+  rotating server-side salt; lazily rotated (and the prior salt **destroyed**) every 7-day window, so
+  a hash is only linkable within its window. RLS-enabled, no policies.
+- **record_artifact_view(p_artifact_id, p_ip, p_ua)** — `SECURITY DEFINER` recorder (execute granted
+  to `service_role` only). Computes `visitor_hash = hmac(salt, ip+ua)` and upserts the deduped row;
+  the IP/UA are used only inside the function and **never stored**. Called by the server-only
+  `lib/audience/record.ts` from the public `/a/[slug]` render (bots + prefetches skipped).
+
 ## Status lifecycle *(amended 2026-06-22)*
 ```
   draft ─► needs_review ⇄ changes_requested ─► approved ─► published
@@ -175,6 +199,9 @@ governance is enforced in the API, not RLS.**
 - `reader_comments`: anon SELECT of `status='visible'` on a live published artifact; author
   inserts/edits/deletes own; admin moderates any. Author display is denormalized on the row, so
   no separate profile read is needed for public rendering.
+- `artifact_views` / `audience_salt`: **no anon/authenticated policy** (RLS default-deny). Writes go
+  through the `SECURITY DEFINER` recorder; reads (admin Insights) use the service-role client and
+  aggregate server-side, so per-visitor hashes never reach the browser.
 
 ## Multi-tenant data model (north star, not built)
 *(Recorded 2026-06-23. **Vision, not current scope** — the GemBlog direction in `vision.md`; maps to
@@ -190,7 +217,9 @@ boundary. The future lift, recorded so it is done consciously:
 - **Tenant discriminator** — add `tenant_id uuid NOT NULL FK→tenants` (+ composite indexes, e.g.
   `(tenant_id, status)`) to every content/engagement table: `artifacts`, `sources`, `artifact_sources`,
   `series`, `comments`, `revisions`, `audit_log`, `reader_comments`, `bookmarks`, `subscriptions`,
-  `routine_configs`. Dedup views (`seen_source_keys` / `rejected_source_keys`) become per-tenant.
+  `routine_configs`, `artifact_views`. Dedup views (`seen_source_keys` / `rejected_source_keys`)
+  become per-tenant. (`audience_salt` can stay global or go per-tenant; per-tenant salts further
+  isolate visitor hashes across tenants.)
 - **RLS rewrites (security-critical).** Every policy gains a tenant predicate; `is_admin()` becomes
   `is_tenant_admin(tenant_id)`. This is the **audit-before-launch** piece — a missed predicate leaks
   cross-tenant data. Needs a dedicated isolation test (TenantA cannot read TenantB).

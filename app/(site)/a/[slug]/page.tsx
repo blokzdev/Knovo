@@ -9,6 +9,7 @@ import { Comments } from "@/components/reader/Comments";
 import { getPublishedArtifact } from "@/lib/artifacts/public";
 import { getBookmarked, getSubscribed } from "@/lib/reader/queries";
 import { getViewer } from "@/lib/reader/viewer";
+import { recordArtifactView } from "@/lib/audience/record";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,8 @@ export default async function ArtifactPage({ params }: { params: { slug: string 
     getViewer(),
     getBookmarked(a.id),
     getSubscribed(),
+    // Privacy-first audience measurement (no cookie, no PII); result ignored, never throws.
+    recordArtifactView(a.id),
   ]);
   const signedIn = !!viewer;
 

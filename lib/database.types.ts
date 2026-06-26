@@ -91,6 +91,41 @@ export type Database = {
           },
         ]
       }
+      artifact_views: {
+        Row: {
+          artifact_id: string
+          day: string
+          first_seen_at: string
+          hits: number
+          last_seen_at: string
+          visitor_hash: string
+        }
+        Insert: {
+          artifact_id: string
+          day: string
+          first_seen_at?: string
+          hits?: number
+          last_seen_at?: string
+          visitor_hash: string
+        }
+        Update: {
+          artifact_id?: string
+          day?: string
+          first_seen_at?: string
+          hits?: number
+          last_seen_at?: string
+          visitor_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artifact_views_artifact_id_fkey"
+            columns: ["artifact_id"]
+            isOneToOne: false
+            referencedRelation: "artifacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       artifacts: {
         Row: {
           created_at: string
@@ -168,6 +203,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      audience_salt: {
+        Row: {
+          id: boolean
+          rotated_at: string
+          salt: string
+          window_id: number
+        }
+        Insert: {
+          id?: boolean
+          rotated_at?: string
+          salt: string
+          window_id: number
+        }
+        Update: {
+          id?: boolean
+          rotated_at?: string
+          salt?: string
+          window_id?: number
+        }
+        Relationships: []
       }
       audit_log: {
         Row: {
@@ -608,6 +664,10 @@ export type Database = {
     }
     Functions: {
       is_admin: { Args: never; Returns: boolean }
+      record_artifact_view: {
+        Args: { p_artifact_id: string; p_ip: string; p_ua: string }
+        Returns: undefined
+      }
     }
     Enums: {
       artifact_status:
@@ -789,4 +849,3 @@ export const Constants = {
     },
   },
 } as const
-

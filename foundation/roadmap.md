@@ -94,23 +94,54 @@ comments/directs in the HUD, and the Editor iterates and publishes on direction;
 artifact renders responsively at a clean URL and is indexable. ✅ All met in prod.
 
 ## Phase 2 — Validate & harden (in progress)
+The goal of Phase 2 is a **track record**: the autonomous loop running on its own cadence, a body of
+published explainers accumulating, and the first real signal that the niche audience cares. It is
+mostly **calendar-time, not code** — the discipline is to instrument and let it run, not gold-plate
+the HUD before the content engine has proven itself.
+
+**Shipped (the operator's cockpit).**
 - **Observability (DONE 2026-06-24):** the admin **Insights** view (`/admin/insights`) — pipeline
   flow, per-day throughput, median draft→publish, run health (with Claude session links), and the
   **drops** the governed API previously suppressed silently. The worker create path now logs
   `dedup_suppressed` (409 duplicate/rejected source) + `validation_rejected` (422 zod) as
   audit-only rows (no mutation, no gate/scope change, no migration), so "validation drops, dedup
   hits" are finally countable. Pure aggregation in `lib/admin/insights.ts` (unit-tested).
-- **Cadence (active next step):** flip the loop from hand-dispatched to autonomous — add **Schedule
-  triggers** to the worker routines (Scout daily @ ~1 draft/run per `vision.md`; Editor daily to clear
-  the directive queue; Keeper weekly). The first prod cycle was manual; validation = the loop running
-  on its own and accumulating a body of published explainers. Volume/ranking tuned from Insights data.
-- Discovery ranking — which finding Scout picks when several qualify (`agent-architecture.md`). Still open.
-- **Audience signal** — are niche practitioners finding + returning to the explainers? Still open;
-  needs a body of content + lightweight analytics first.
+- **HUD elevation (DONE 2026-06-24):** the shared mobile-first activity system (run-grouped feed with
+  Claude session deep links, revision diff + restore); a **"needs attention" banner** (review-SLA +
+  failed-run + drop-rate alerts); **state-aware dispatch worker cards** (ready/setup/issue with a
+  Set-up/Fix deep link); the audit-tab overflow fix. Plan of record: `docs/admin-hud.md`.
+- **Editorial Queue board (DONE 2026-06-24):** `/admin/queue` — Incoming → In review → Awaiting Editor
+  → Ready, fully actionable inline; nav split to Overview / Queue / Library. This **is** the GemBlog
+  editorial paradigm, perfected on the showcase tenant.
+- **Routine path fix (DONE 2026-06-24):** canonical `/api/worker` path so workers stop guessing.
+- **Cadence (DONE 2026-06-25):** the loop is **autonomous** — the owner set the worker **Schedule
+  triggers** (Scout daily @ ~1 draft/run per `vision.md`; Editor daily to clear the directive queue;
+  Keeper weekly). The first prod cycle was hand-dispatched; it now runs on cadence without a human in
+  the dispatch path. Volume/ranking will be tuned from Insights data as the record accumulates.
+
+**The "next" sequence (ordered — tackle deliberately).** Two truths shape the order: (a) validation is
+now mostly calendar-time, and (b) one validation question is one we literally cannot answer yet —
+*are niche practitioners finding and **returning** to these explainers?* That gap leads.
+1. **Audience signal — analytics (DONE 2026-06-26).** Privacy-first, own-your-data, server-side
+   view/return measurement on **published** public artifacts, surfaced as an **Audience** section in
+   `/admin/insights` (views/day, unique + returning readers, top artifacts). **No third-party tracker,
+   no cookie, no PII** — readers are keyed by a cookieless salted hash (HMAC of ip+ua) computed inside
+   a `SECURITY DEFINER` recorder; the salt rotates+destroys every 7 days, so "returning" is a
+   within-the-week signal and IP/UA are never stored (migration `0011`; `security-and-privacy.md` →
+   "Audience measurement"). Recording runs in the `/a/[slug]` server render, skipping bots + prefetches;
+   raw hashes never reach the browser (service-role read, server-side aggregation). Pure, unit-tested
+   aggregation in `lib/admin/audience.ts`. Built single-tenant, designed to generalize per-tenant.
+2. **Reader-loop activation — transactional email.** Subscribe today records intent + RSS only; email
+   is **net-new** (no provider/dep/env/template). Wire an email provider (e.g. Resend + `RESEND_API_KEY`)
+   + `lib/email/*` + templates so `setSubscribed`/publish actually **notify readers** of new explainers
+   — closing the loop the analytics measure. (BACKLOG "Subscription / transactional email" row.)
+3. **Discovery-ranking tuning.** Tune **Scout's finding selection** + a **quality rubric**, data-informed
+   once Insights has enough real drafting history to show what's being drafted and what lands high-value
+   (`agent-architecture.md` open question — "which finding Scout picks when several qualify").
 
 > **Platform-horizon gate (still held).** GemBlog / multi-tenant (M1–M6) stays parked until this Phase 2
-> validation track record exists — Phase 1 working in prod is the *runway*, not the *climb*.
-- Audience signal (are niche practitioners returning?). Still open.
+> validation track record exists — Phase 1 working in prod is the *runway*, not the *climb*. The
+> Queue/HUD already built **is** the GemBlog paradigm, perfected on the showcase tenant.
 
 ## Phase 3 — Site experience & public presence (sketch)
 A focused design pass on everything *around* the artifacts, once the content engine is
