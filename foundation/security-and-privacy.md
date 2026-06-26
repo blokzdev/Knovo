@@ -100,6 +100,34 @@ and bypasses RLS — governance is enforced in the API instead).
   subscriptions are private. See `/legal/privacy`.
 - Source `raw_meta` stores public scientific metadata only — no personal data.
 
+## Audience measurement (privacy-first, no PII) *(0011, 2026-06-26)*
+To answer the open Phase-2 validation question — *are practitioners finding and **returning** to the
+explainers?* — published artifacts carry a **server-side, cookieless, no-PII** view/return measure.
+Chosen deliberately over any third-party analytics or tracking cookie (honors the "decline
+non-essential" stance — there is nothing to decline because nothing is set in the browser):
+- **No cookie, no third party.** Recording happens during the `/a/[slug]` server render
+  (`lib/audience/record.ts`), never from client JS; no script, pixel, or external service is loaded.
+- **No PII stored.** A reader is keyed by `visitor_hash = HMAC(salt, ip + ua)` computed **inside** the
+  `SECURITY DEFINER` Postgres recorder; the **IP and User-Agent are never persisted** — only the hash.
+- **Salt rotation = bounded linkability.** The HMAC salt lives server-side in `audience_salt`, is
+  randomly generated, and is **rotated (and the prior salt destroyed) every 7-day window**, so a hash
+  is only linkable within its window. "Returning reader" is therefore a within-the-week signal by
+  construction; cross-window returns are intentionally unlinkable.
+- **Deduped daily; bots + prefetches excluded.** One row per `(artifact, day, visitor_hash)` (repeat
+  same-day visits bump a `hits` counter); the recorder skips bot/crawler/AI-fetcher User-Agents and
+  Next.js router prefetches so the signal reflects real human reads.
+- **Hashes never reach a browser.** `artifact_views`/`audience_salt` have **no anon/authenticated RLS
+  grant**; the admin Insights page reads them via the **service-role** client and aggregates
+  server-side, sending only the view model (counts) to the client.
+- **Residual caveat (documented).** The salt is a server-only secret; if both the salt and the stored
+  hashes leaked *within the same 7-day window*, a holder of a candidate IP+UA could confirm presence
+  for that window. Mitigated by per-window rotation + destruction and the service-role-only read;
+  acceptable for a single-tenant validation tenant. (Per-tenant salts are a future hardening — see
+  `data-model.md` multi-tenant note.)
+- **Deployment note.** New SQL functions need a PostgREST schema-cache reload before `.rpc()` resolves
+  them; hosted Supabase reloads automatically on migrate, but a local stack needs
+  `notify pgrst, 'reload schema';` (or a `supabase_rest` restart) after `supabase migration up`.
+
 ## Network isolation (routine cloud env)
 Routine sessions share one network-allowlisted cloud env ("Knovo", **Custom** access): MCP
 connector traffic is routed through Anthropic, but direct HTTPS to other hosts is blocked unless

@@ -122,12 +122,15 @@ the HUD before the content engine has proven itself.
 **The "next" sequence (ordered — tackle deliberately).** Two truths shape the order: (a) validation is
 now mostly calendar-time, and (b) one validation question is one we literally cannot answer yet —
 *are niche practitioners finding and **returning** to these explainers?* That gap leads.
-1. **Audience signal — analytics (building now).** Privacy-first, own-your-data, server-side
+1. **Audience signal — analytics (DONE 2026-06-26).** Privacy-first, own-your-data, server-side
    view/return measurement on **published** public artifacts, surfaced as an **Audience** section in
-   `/admin/insights` (views/day, top artifacts, a returning-reader signal). **No third-party tracker,
-   no PII** — honors the privacy invariants (`security-and-privacy.md`) and the "decline non-essential"
-   stance. This is the one open Phase-2 validation question we can't otherwise answer, and the signal
-   the GemBlog gate hinges on. Built single-tenant now, designed to generalize per-tenant later.
+   `/admin/insights` (views/day, unique + returning readers, top artifacts). **No third-party tracker,
+   no cookie, no PII** — readers are keyed by a cookieless salted hash (HMAC of ip+ua) computed inside
+   a `SECURITY DEFINER` recorder; the salt rotates+destroys every 7 days, so "returning" is a
+   within-the-week signal and IP/UA are never stored (migration `0011`; `security-and-privacy.md` →
+   "Audience measurement"). Recording runs in the `/a/[slug]` server render, skipping bots + prefetches;
+   raw hashes never reach the browser (service-role read, server-side aggregation). Pure, unit-tested
+   aggregation in `lib/admin/audience.ts`. Built single-tenant, designed to generalize per-tenant.
 2. **Reader-loop activation — transactional email.** Subscribe today records intent + RSS only; email
    is **net-new** (no provider/dep/env/template). Wire an email provider (e.g. Resend + `RESEND_API_KEY`)
    + `lib/email/*` + templates so `setSubscribed`/publish actually **notify readers** of new explainers
