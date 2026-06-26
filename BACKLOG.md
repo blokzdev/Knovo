@@ -172,5 +172,11 @@ mirrors into the Open questions section here.
 
 ### roadmap.md
 - Phase 1 ordering: renderer-first vs. pipeline-first. *Trigger:* starting Phase 1.
-- What audience signal counts as "validated" before monetization. *Trigger:* first
+- **Phase-2 "next" sequence (ordered, recorded 2026-06-26):** (1) **audience signal — analytics**
+  (building now), (2) **reader-loop activation — transactional email** (the "Subscription /
+  transactional email" deferred row below), (3) **discovery-ranking tuning** (the `agent-architecture.md`
+  open question above). Mirrors `roadmap.md` → Phase 2.
+- What audience signal counts as "validated" before monetization is a **threshold** call that stays
+  open pending real data — the *measurement* (views/day, top artifacts, a no-PII returning-reader
+  signal) lands in Phase-2 slice 1; the *bar* that counts as validation does not. *Trigger:* first
   sustained traffic.
