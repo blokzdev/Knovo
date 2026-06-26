@@ -58,7 +58,6 @@ alter table public.artifact_views enable row level security;
 -- page reads via the service-role client and aggregates server-side before rendering.
 
 create index artifact_views_day_idx on public.artifact_views (day);
-create index artifact_views_hash_day_idx on public.artifact_views (visitor_hash, day);
 
 -- --------------------------------------------------------------------------------------------
 -- The recorder. Called only by server-only, service-role code (lib/audience/record.ts) with the
@@ -89,18 +88,32 @@ begin
     return;
   end if;
 
-  -- Rotate-or-read the salt atomically. A fresh random salt is generated every call but only
-  -- ADOPTED when the window advances; otherwise the existing salt is kept. When the window rolls,
-  -- the old salt is overwritten (destroyed) so past-window hashes can no longer be linked.
-  insert into public.audience_salt (id, salt, window_id)
-  values (true, encode(extensions.gen_random_bytes(32), 'hex'), v_window_id)
-  on conflict (id) do update
-    set salt       = case when public.audience_salt.window_id <> excluded.window_id
-                          then excluded.salt else public.audience_salt.salt end,
-        window_id  = excluded.window_id,
-        rotated_at = case when public.audience_salt.window_id <> excluded.window_id
-                          then now() else public.audience_salt.rotated_at end
-  returning salt into v_salt;
+  -- Read the current salt, rotating ONLY when the 7-day window has advanced. The common path
+  -- (window unchanged) takes NO write — it falls through to a plain SELECT — so the high-frequency
+  -- recorder does not lock or churn (dead-tuple) the singleton salt row on every page view. When
+  -- the window rolls, exactly one caller wins the conditional UPDATE and overwrites (destroys) the
+  -- prior salt, severing linkability for past windows; concurrent callers then SELECT the new salt.
+  update public.audience_salt
+    set salt = encode(extensions.gen_random_bytes(32), 'hex'),
+        window_id = v_window_id,
+        rotated_at = now()
+    where id and window_id <> v_window_id
+    returning salt into v_salt;
+
+  if v_salt is null then
+    -- Either the window is unchanged (row exists) or this is the cold start (no row yet).
+    select salt into v_salt from public.audience_salt where id;
+    if v_salt is null then
+      insert into public.audience_salt (id, salt, window_id)
+        values (true, encode(extensions.gen_random_bytes(32), 'hex'), v_window_id)
+        on conflict (id) do nothing
+        returning salt into v_salt;
+      if v_salt is null then
+        -- lost the cold-start race; the winner's row is now present
+        select salt into v_salt from public.audience_salt where id;
+      end if;
+    end if;
+  end if;
 
   -- One-way salted hash of IP+UA. Inputs are used only here and never persisted.
   v_hash := encode(

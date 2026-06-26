@@ -22,6 +22,10 @@ export const dynamic = "force-dynamic";
 
 const WINDOW_DAYS = 30; // headline + flow window
 const CHART_DAYS = 14; // throughput columns
+// Audience is scoped to a single 7-day window === the salt lifetime (migration 0011). A visitor_hash
+// is only stable within one salt window, so every reader metric (unique/returning) is meaningful only
+// within it; bounding the whole section to 7 days keeps the numbers salt-correct and the fetch small.
+const AUDIENCE_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export default async function InsightsPage() {
@@ -33,7 +37,8 @@ export default async function InsightsPage() {
   // per-visitor hashes carry no browser RLS grant, so they never reach a client — we aggregate them
   // server-side and render only the view model. See migration 0011 + security-and-privacy.md.
   const admin = createAdminClient();
-  const viewsCutoffDay = new Date(now - WINDOW_DAYS * DAY_MS).toISOString().slice(0, 10);
+  // Inclusive day cutoff: last AUDIENCE_DAYS calendar days (UTC), so the count matches the label.
+  const viewsCutoffDay = new Date(now - (AUDIENCE_DAYS - 1) * DAY_MS).toISOString().slice(0, 10);
 
   const [{ data: events }, { data: runsRaw }, { data: drops }, { data: artifacts }, { data: views }] =
     await Promise.all([
@@ -60,6 +65,7 @@ export default async function InsightsPage() {
         .from("artifact_views")
         .select("artifact_id, day, visitor_hash, hits")
         .gte("day", viewsCutoffDay)
+        .order("day", { ascending: false }) // deterministic: if ever capped, drop oldest days first
         .limit(20000),
     ]);
 
@@ -72,8 +78,10 @@ export default async function InsightsPage() {
   const livePublished = (artifacts ?? []).filter((a) => a.status === "published" && !a.deleted_at).length;
   const runs = (runsRaw ?? []) as RunSummary[];
 
-  // Audience: views/day, unique + returning readers, and the most-read artifacts.
-  const audience = summarizeAudience((views ?? []) as AudienceViewRow[], CHART_DAYS, now);
+  // Audience: views/day, unique + returning readers, and the most-read artifacts — all over the
+  // 7-day salt window (the rows fetched), so unique/returning are salt-correct (no cross-window
+  // hash double-counting).
+  const audience = summarizeAudience((views ?? []) as AudienceViewRow[], AUDIENCE_DAYS, now);
   const artifactById = new Map((artifacts ?? []).map((a) => [a.id, a]));
   const topArtifacts: TopArtifactRow[] = audience.topArtifacts.map((t) => {
     const a = artifactById.get(t.artifactId);
@@ -124,21 +132,21 @@ export default async function InsightsPage() {
       {/* Audience — the open Phase-2 validation question: are practitioners finding + returning? */}
       <section className="space-y-3">
         <SectionHeading className="flex items-center gap-1.5">
-          <Users className="h-3.5 w-3.5" /> Audience · last {WINDOW_DAYS} days
+          <Users className="h-3.5 w-3.5" /> Audience · last {AUDIENCE_DAYS} days
         </SectionHeading>
         <p className="-mt-1 text-xs text-muted-foreground">
           Privacy-first reach on the published library — no cookies, no third party, no PII. Readers are
-          counted by a cookieless salted hash that rotates weekly, so &ldquo;returning&rdquo; is a
-          within-the-week signal.
+          counted by a cookieless salted hash that rotates weekly; the window matches that lifetime, so
+          &ldquo;returning&rdquo; means the same reader on ≥2 days this week.
         </p>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <InsightStat icon={Eye} tone="indigo" value={audience.totalViews} label="Views" hint="last 30 days" />
+          <InsightStat icon={Eye} tone="indigo" value={audience.totalViews} label="Views" hint={`last ${AUDIENCE_DAYS} days`} />
           <InsightStat
             icon={Users}
             tone="brand"
             value={audience.uniqueReaders}
             label="Unique readers"
-            hint="distinct visitors"
+            hint="distinct, this week"
           />
           <InsightStat
             icon={Repeat}
@@ -157,11 +165,11 @@ export default async function InsightsPage() {
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">Reads · last {CHART_DAYS} days</p>
+            <p className="text-xs font-medium text-muted-foreground">Reads · last {AUDIENCE_DAYS} days</p>
             <AudienceChart data={audience.perDay} />
           </div>
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground">Most read</p>
+            <p className="text-xs font-medium text-muted-foreground">Most read · this week</p>
             <TopArtifactsPanel rows={topArtifacts} />
           </div>
         </div>

@@ -91,6 +91,19 @@ describe("summarizeAudience", () => {
     expect(s.totalViews).toBe(5);
   });
 
+  it("counts distinct hashes as distinct readers (why the caller must scope to one salt window)", () => {
+    // The same physical person gets a fresh hash in each 7-day salt window, so passing rows from
+    // two windows would over-count them. This documents the contract the Insights page upholds by
+    // fetching exactly the salt window (AUDIENCE_DAYS): within-window dedup works, cross-window can't.
+    const rows = [
+      row("a", "2026-06-20", "week1hash"), // same person, salt window 1
+      row("a", "2026-06-26", "week2hash"), // same person, salt window 2 → different hash
+    ];
+    const s = summarizeAudience(rows, 7, NOW);
+    expect(s.uniqueReaders).toBe(2); // cannot be deduped across windows — by privacy design
+    expect(s.returningReaders).toBe(0); // neither hash spans 2 days
+  });
+
   it("treats non-positive hits defensively as zero views", () => {
     const s = summarizeAudience([row("a", "2026-06-26", "h1", 0)], 14, NOW);
     expect(s.totalViews).toBe(0);

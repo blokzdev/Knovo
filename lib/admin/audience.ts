@@ -8,6 +8,12 @@
 // is therefore inherently a within-window signal (a reader seen on >= 2 distinct days); cross-window
 // returns are intentionally unlinkable. No PII is involved at any layer.
 //
+// CONTRACT: `uniqueReaders` / `returningReaders` are computed over ALL `rows` passed in, so the
+// caller MUST pass only rows within a single salt window (≤ 7 days) for those to be meaningful —
+// across a wider window the same reader gets a fresh hash each window and would be over-counted as
+// several "unique" readers. The Insights page enforces this by fetching exactly the 7-day window
+// (`AUDIENCE_DAYS`). `totalViews` (raw hits) and `perDay` are salt-independent.
+//
 // Kept pure + `now`-injectable (no Date.now()) for deterministic unit tests, mirroring
 // lib/admin/insights.ts.
 
